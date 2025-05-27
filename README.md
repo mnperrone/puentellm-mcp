@@ -11,7 +11,7 @@ Aplicación de escritorio en Python (Tkinter + CustomTkinter) que actúa como pu
 - **Respuestas siempre en español** y comportamiento configurable del asistente.
 
 ## ¿Qué es MCP?
-MCP (Model Context Protocol) es un protocolo abierto que estandariza cómo las aplicaciones proporcionan contexto y capacidades a los modelos de lenguaje. Permite conectar LLMs con diferentes fuentes de datos y herramientas de manera unificada, como si fuera un "puerto USB-C" para IA. **No tiene relación con Minecraft ni videojuegos.**
+MCP (Model Context Protocol) es un protocolo abierto que estandariza cómo las aplicaciones proporcionan contexto y capacidades a los modelos de lenguaje. Permite conectar LLMs con diferentes fuentes de datos y herramientas de manera unificada, como si fuera un "puerto USB-C" para IA. 
 
 ## Requisitos
 - Python 3.10+

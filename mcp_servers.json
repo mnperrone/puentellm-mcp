@@ -1,0 +1,16 @@
+{
+    "mcpServers": {
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "C:\\Users\\mperrone",
+                "C:\\Users\\mperrone\\Downloads",
+                "C:\\Users\\mperrone\\Documents"
+            ],
+            "enabled": true,
+            "port": 8080
+        }
+    }
+}

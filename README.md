@@ -64,7 +64,6 @@ README.md          # Este archivo
 - El foco del cursor se posiciona automáticamente en el campo de entrada al iniciar la app.
 - El asistente responde solo en español y de forma concisa.
 - El proyecto no requiere carpetas `.venv` ni `.idea` para funcionar.
-- El archivo `client.py` ha sido eliminado (ya no es necesario).
 
 ## Pruebas del sistema PuenteLLM-MCP
 
@@ -141,4 +140,4 @@ Contiene los módulos para cada proveedor de LLM:
 
 ---
 
-Para dudas, sugerencias o reportes, abre un issue o contacta al autor.
+Para dudas, sugerencias o reportes, me puedes contactar en mnperrone@gmail.com

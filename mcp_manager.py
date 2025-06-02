@@ -5,16 +5,31 @@ import os
 import sys
 from pathlib import Path
 import time
+from assets.logging import PersistentLogger
 
 MCP_CONFIG_FILE = "mcp_servers.json"
 
 class MCPManager:
-    def __init__(self, app_logger_func):
+    """
+    Gestiona la configuración y ejecución de servidores MCP.
+    Attributes:
+        servers_config: Configuración cargada de los servidores MCP
+        active_processes: Diccionario con los procesos de servidores en ejecución
+        logger: Función o instancia para registrar mensajes
+        running: Bandera para controlar el ciclo de vida de los servidores
+    """
+    def __init__(self, app_logger_func=None):
+        """
+        Inicializa un nuevo gestor de servidores MCP.
+        Args:
+            app_logger_func: Función opcional para registrar mensajes
+        """
         self.servers_config = {}
         self.active_processes = {}
         self.server_ports = {}
-        self.logger = app_logger_func
+        self.logger = app_logger_func if app_logger_func else PersistentLogger().log
         self._stop_events = {}
+        self.running = True
 
     def get_default_config_path(self):
         if getattr(sys, 'frozen', False):
@@ -24,6 +39,7 @@ class MCPManager:
         return Path(application_path) / MCP_CONFIG_FILE
 
     def _get_default_mcp_config_with_paths(self):
+        """Obtiene la configuración MCP por defecto con rutas resueltas."""
         try:
             home_dir = Path.home()
             downloads_dir = home_dir / "Downloads"
@@ -36,38 +52,109 @@ class MCPManager:
             elif len(resolved_paths) == 1:
                 resolved_paths.append(str(resolved_paths[0] / "TYPE_ANOTHER_VALID_PATH_HERE"))
         except Exception as e:
-            self.logger(f"Error obteniendo rutas por defecto: {e}. Usando placeholders.", "warning")
+            # Usar logger si está disponible
+            if hasattr(self, 'logger') and callable(self.logger):
+                self.logger(f"Error obteniendo rutas por defecto: {e}. Usando placeholders.", "warning")
+            else:
+                print(f"Error obteniendo rutas por defecto: {e}. Usando placeholders.")
             resolved_paths = ["C:/TYPE_VALID_PATH_1_HERE", "C:/TYPE_VALID_PATH_2_HERE"]
+        
         config_template = {
             "mcpServers": {
                 "filesystem": {
                     "command": "npx",
                     "args": ["-y", "@modelcontextprotocol/server-filesystem"] + resolved_paths,
-                    "enabled": True, "port": 8080
-                }}}
+                    "enabled": True, 
+                    "port": 8080
+                }
+            }
+        }
         return config_template
+
+    def _validate_server_config(self, server_name, config):
+        """Valida la configuración de un servidor MCP."""
+        if not server_name:
+            if hasattr(self, 'logger') and callable(self.logger):
+                self.logger("Nombre del servidor MCP no proporcionado.", "error")
+            return False
+        
+        if not config:
+            if hasattr(self, 'logger') and callable(self.logger):
+                self.logger(f"Configuración vacía para el servidor MCP '{server_name}'.", "error")
+            return False
+        
+        required_fields = ['command', 'args', 'port', 'enabled']
+        missing_fields = [field for field in required_fields if field not in config]
+        
+        if missing_fields:
+            if hasattr(self, 'logger') and callable(self.logger):
+                self.logger(f"Faltan campos obligatorios en la configuración de '{server_name}': {missing_fields}", "error")
+            return False
+        
+        return True
 
     def load_config(self, config_path=None):
         path_to_load = Path(config_path) if config_path else self.get_default_config_path()
         try:
-            if not path_to_load.exists():
-                self.logger(f"Archivo de configuración MCP no encontrado en {path_to_load}. Creando uno por defecto.", "system")
-                default_config_with_paths = self._get_default_mcp_config_with_paths()
-                with open(path_to_load, 'w') as f: json.dump(default_config_with_paths, f, indent=4)
-                self.servers_config = default_config_with_paths
+            with open(path_to_load, 'r', encoding='utf-8') as f:
+                raw_config = json.load(f)
+            
+            if not raw_config.get('mcpServers') or not isinstance(raw_config['mcpServers'], dict):
+                raise ValueError("Configuración de servidores MCP inválida: falta 'mcpServers' o no es un diccionario")
+            
+            # Validar cada servidor
+            validated_servers = {}
+            for server_name, server_config in raw_config['mcpServers'].items():
+                try:
+                    self._validate_server_config(server_name, server_config)
+                    validated_servers[server_name] = server_config
+                except ValueError as e:
+                    self.logger(f"Advertencia: Configuración ignorada para {server_name}: {str(e)}", "error")
+                    continue
+            
+            self.servers_config = {"mcpServers": validated_servers}
+            
+            # Si ningún servidor es válido, crear uno por defecto
+            if not validated_servers:
+                self.logger("No se encontraron configuraciones de servidores MCP válidas. Usando configuración por defecto.", "system")
+                default_config = self._get_default_mcp_config_with_paths()
+                self.servers_config = default_config
+                with open(path_to_load, 'w') as f:
+                    json.dump(default_config, f, indent=4)
                 self.logger(f"Configuración por defecto creada en {path_to_load}. Revísala.", "system")
             else:
-                with open(path_to_load, 'r') as f: self.servers_config = json.load(f)
-                self.logger(f"Configuración MCP cargada desde {path_to_load}.", "system")
+                # Actualizar los puertos
+                base_port = 8080
+                self.server_ports = {}
+                for name, config_data in validated_servers.items():
+                    if config_data.get("enabled", True):
+                        self.server_ports[name] = config_data.get("port", base_port)
+                        base_port += 1
+            
+            return True
+        except FileNotFoundError:
+            self.logger(f"Archivo de configuración no encontrado: {path_to_load}. Creando configuración por defecto.", "system")
+            default_config = self._get_default_mcp_config_with_paths()
+            self.servers_config = default_config
+            with open(path_to_load, 'w') as f:
+                json.dump(default_config, f, indent=4)
+            self.logger(f"Configuración por defecto creada en {path_to_load}. Revísala.", "system")
             base_port = 8080
             self.server_ports = {}
-            for name, config_data in self.servers_config.get("mcpServers", {}).items():
+            for name, config_data in default_config.get("mcpServers", {}).items():
                 if config_data.get("enabled", True):
-                    self.server_ports[name] = config_data.get("port", base_port); base_port +=1
+                    self.server_ports[name] = config_data.get("port", base_port)
+                    base_port += 1
             return True
+        except json.JSONDecodeError as e:
+            self.logger(f"Error decodificando JSON en {path_to_load}: {e}. Usando configuración por defecto.", "error")
+            default_config = self._get_default_mcp_config_with_paths()
+            self.servers_config = default_config
+            return False
         except Exception as e:
-            self.logger(f"Error al cargar o crear la configuración MCP ({path_to_load}): {e}", "error")
-            self.servers_config = {"mcpServers": {}}; return False
+            self.logger(f"Error cargando configuración desde {path_to_load}: {e}. Usando configuración por defecto.", "error")
+            self.servers_config = {"mcpServers": {}}
+            return False
 
     def get_active_server_names(self):
         return [name for name, config in self.servers_config.get("mcpServers", {}).items() if config.get("enabled", True)]
@@ -216,3 +303,30 @@ class MCPManager:
                 self.logger(f"Respuesta no JSON de {server_name}: {response_str}", "error"); return {"error": {"code":-3, "message":"Respuesta no JSON", "data":response_str}}
         except Exception as e:
             self.logger(f"Excepción en comunicación con {server_name}: {e}", "error"); return {"error": {"code":-4, "message":str(e)}}
+
+    def is_server_running(self, server_name):
+        """Verifica si un servidor MCP está en ejecución."""
+        process = self.active_processes.get(server_name)
+        if not process:
+            return False
+        return process.poll() is None
+
+    def save_config(self, filepath=None):
+        """Guarda la configuración actual de servidores MCP en un archivo JSON."""
+        if filepath is None:
+            filepath = self.get_default_config_path()
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(self.servers_config, f, indent=4, ensure_ascii=False)
+            if hasattr(self, 'logger') and callable(self.logger):
+                self.logger(f"Configuración MCP guardada en {filepath}", "system")
+            else:
+                print(f"Configuración MCP guardada en {filepath}")
+            return True
+        except Exception as e:
+            if hasattr(self, 'logger') and callable(self.logger):
+                self.logger(f"Error al guardar configuración MCP: {e}", "error")
+            else:
+                print(f"Error al guardar configuración MCP: {e}")
+            return False
+

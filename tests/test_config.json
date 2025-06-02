@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "python",
+      "type": "local",
+      "port": 8083,
+      "enabled": true,
+      "auto_restart": false,
+      "workdir": ".",  // Directorio actual
+      "args": ["-m", "modelcontextprotocol.servers.filesystem"]  // Argumentos adicionales
+    },
+    "browser": {
+      "command": "playwright",
+      "type": "npm",
+      "port": 8084,
+      "enabled": true,
+      "auto_restart": false,
+      "workdir": ".",
+      "args": ["--target", "browser"]  // Argumentos adicionales
+    },
+    "remote-test": {
+      "url": "http://localhost:8085",
+      "type": "remote",
+      "enabled": false,  // Por defecto los servidores remotos están deshabilitados
+      "auto_restart": false
+    }
+  }
+}

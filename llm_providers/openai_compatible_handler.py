@@ -35,3 +35,6 @@ class OpenAICompatibleHandler:
         response = self.generate(prompt)
         yield {"message": {"content": response}}
 
+    def list_models(self):
+        """Returns the configured model for compatibility."""
+        return [{"name": self.model}]

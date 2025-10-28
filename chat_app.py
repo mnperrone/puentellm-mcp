@@ -14,6 +14,7 @@ from llm_mcp_handler import LLMMCPHandler
 from app_config import AppConfig
 import strictjson
 from mcp_config_window import MCPConfigWindow
+from llm_config_window import LLMConfigWindow
 from llm_providers.llm_exception import LLMConnectionError
 
 
@@ -144,79 +145,66 @@ class ChatApp:
         """Crea la barra superior con controles de LLM"""
         top_frame = ctk.CTkFrame(self.window, height=50, corner_radius=0)
         top_frame.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
-        top_frame.grid_columnconfigure(1, weight=1)  # Para que el estado MCP empuje los controles a la izquierda
-        
-        # Selector de modelo LLM
-        ctk.CTkLabel(top_frame, text="🧠 Modelo LLM:").pack(side=tk.LEFT, padx=(10, 5), pady=10)
-        
-        self.llm_combo = ctk.CTkComboBox(
-            top_frame,
-            values=["llama3:latest", "smollm2:1.7b", "phi3:latest", "mistral:latest"],
-            width=200
-        )
-        self.llm_combo.set(self.llm_model)
-        self.llm_combo.pack(side=tk.LEFT, padx=5, pady=10)
-        
-        # Botón de control LLM
-        self.llm_control_button = ctk.CTkButton(
-            top_frame,
-            text="▶️ Iniciar LLM",
-            command=self.toggle_llm,
-            width=120
-        )
-        self.llm_control_button.pack(side=tk.LEFT, padx=5, pady=10)
-        
-        # Botón de configuración LLM remoto
-        self.remote_llm_button = ctk.CTkButton(
-            top_frame,
-            text="⚙️ Configurar LLM remoto",
-            command=self.open_remote_llm_config,
-            width=180
-        )
-        self.remote_llm_button.pack(side=tk.LEFT, padx=5, pady=10)
-        
-        # Selector de proveedor
+
+        # Configure grid columns to layout widgets
+        top_frame.grid_columnconfigure(0, weight=0) # Provider Label
+        top_frame.grid_columnconfigure(1, weight=1) # Provider Combo
+        top_frame.grid_columnconfigure(2, weight=0) # Model Label
+        top_frame.grid_columnconfigure(3, weight=1) # Model Combo
+        top_frame.grid_columnconfigure(4, weight=0) # Configure Button
+        top_frame.grid_columnconfigure(5, weight=0) # Start/Stop Button
+        top_frame.grid_columnconfigure(6, weight=2) # Spacer
+        top_frame.grid_columnconfigure(7, weight=0) # MCP Status
+        top_frame.grid_columnconfigure(8, weight=0) # Theme Toggle
+
+        # Provider Selector
+        ctk.CTkLabel(top_frame, text="Proveedor:").grid(row=0, column=0, padx=(10, 5), pady=10)
         self.provider_combo = ctk.CTkComboBox(
             top_frame,
-            values=["ollama", "openai_compatible", "qwen"],
-            command=self.on_backend_change,
+            values=["ollama", "openai_compatible", "qwen", "deepseek", "openrouter", "huggingface"],
+            command=self.on_provider_change,
             width=150
         )
         self.provider_combo.set(self.provider)
-        self.provider_combo.pack(side=tk.LEFT, padx=5, pady=10)
-        
-        # Botón de tema
-        # Botón de tema
-        self.theme_toggle = ctk.CTkButton(
-            top_frame,
-            text="🌙 Modo oscuro",
-            command=self.toggle_theme,
-            width=120
+        self.provider_combo.grid(row=0, column=1, padx=5, pady=10)
+
+        # Model Selector
+        ctk.CTkLabel(top_frame, text="Modelo:").grid(row=0, column=2, padx=(10, 5), pady=10)
+        self.llm_combo = ctk.CTkComboBox(top_frame, values=[], width=200)
+        self.llm_combo.set(self.llm_model)
+        self.llm_combo.grid(row=0, column=3, padx=5, pady=10)
+
+        # Remote LLM Config Button
+        self.remote_llm_button = ctk.CTkButton(
+            top_frame, text="⚙️", command=self.open_remote_llm_config, width=40
         )
-        self.theme_toggle.pack(side=tk.RIGHT, padx=10, pady=10)
-        
-        # Estado de MCP
+        self.remote_llm_button.grid(row=0, column=4, padx=5, pady=10)
+
+        # LLM Control Button
+        self.llm_control_button = ctk.CTkButton(
+            top_frame, text="▶️ Iniciar", command=self.toggle_llm, width=100
+        )
+        self.llm_control_button.grid(row=0, column=5, padx=5, pady=10)
+
+        # Spacer
+        ctk.CTkFrame(top_frame, fg_color="transparent").grid(row=0, column=6)
+
+        # MCP Status
         mcp_status_frame = ctk.CTkFrame(top_frame, fg_color="transparent")
-        mcp_status_frame.pack(side=tk.LEFT, padx=5, pady=5)
-        
-        # Icono de estado MCP
-        self.mcp_status_icon = ctk.CTkLabel(
-            mcp_status_frame,
-            text="🔄",
-            font=("Segoe UI", 14)
-        )
+        mcp_status_frame.grid(row=0, column=7, padx=5, pady=5)
+        self.mcp_status_icon = ctk.CTkLabel(mcp_status_frame, text="🔄", font=("Segoe UI", 14))
         self.mcp_status_icon.pack(side=tk.LEFT, padx=(10, 0))
-        
-        # Etiqueta de estado MCP
-        self.mcp_status_label = ctk.CTkLabel(
-            mcp_status_frame,
-            text="MCP: Cargando...",
-            font=("Segoe UI", 12)
-        )
+        self.mcp_status_label = ctk.CTkLabel(mcp_status_frame, text="MCP: ...", font=("Segoe UI", 12))
         self.mcp_status_label.pack(side=tk.LEFT, padx=5)
-        
-        # Iniciar actualización periódica del estado
+
+        # Theme Toggle Button
+        self.theme_toggle = ctk.CTkButton(
+            top_frame, text="🌙", command=self.toggle_theme, width=40
+        )
+        self.theme_toggle.grid(row=0, column=8, padx=10, pady=10)
+
         self.update_mcp_status_label()
+        self.on_provider_change(self.provider) # Initial UI setup
     
     def create_main_layout(self):
         """Crea el diseño principal de la aplicación"""
@@ -756,55 +744,47 @@ class ChatApp:
     
     def open_remote_llm_config(self):
         """Abre el diálogo de configuración de LLM remoto"""
-        dialog = ctk.CTkToplevel(self.window)
-        dialog.title("⚙️ Configurar LLM remoto")
-        dialog.geometry("500x300")
-        dialog.transient(self.window)
-        dialog.grab_set()
-        
-        # Configuración de la API
-        ctk.CTkLabel(dialog, text="🔑 API Key:").pack(pady=(10, 0), padx=10, anchor=tk.W)
-        api_key_entry = ctk.CTkEntry(dialog, width=400, show="*")
-        api_key_entry.pack(padx=10, pady=(0, 10), fill=tk.X)
-        
-        # URL del endpoint
-        ctk.CTkLabel(dialog, text="🌐 URL del endpoint:").pack(pady=(5, 0), padx=10, anchor=tk.W)
-        endpoint_entry = ctk.CTkEntry(dialog, width=400)
-        endpoint_entry.pack(padx=10, pady=(0, 10), fill=tk.X)
-        
-        # Botones
-        button_frame = ctk.CTkFrame(dialog)
-        button_frame.pack(fill=tk.X, padx=10, pady=10)
-        
-        def save_config():
-            # Aquí iría la lógica para guardar la configuración
-            api_key = api_key_entry.get()
-            endpoint = endpoint_entry.get()
-            self.log_message(f"Configuración de LLM remoto guardada - Endpoint: {endpoint}", "info")
-            dialog.destroy()
-        
-        ctk.CTkButton(
-            button_frame,
-            text="💾 Guardar",
-            command=save_config
-        ).pack(side=tk.RIGHT, padx=5)
-        
-        ctk.CTkButton(
-            button_frame,
-            text="❌ Cancelar",
-            command=dialog.destroy
-        ).pack(side=tk.RIGHT, padx=5)
+        LLMConfigWindow(self.window)
     
     def show_mcp_config(self):
         """Muestra la ventana de configuración de MCP"""
         MCPConfigWindow(self.window, self.mcp_manager, self)
     
-    def on_backend_change(self, choice):
-        """Se ejecuta cuando se cambia el proveedor de LLM"""
+    def on_provider_change(self, choice):
+        """Handles the logic when the LLM provider is changed."""
         self.provider = choice
+        provider_configs = self.config.get('llm_provider_configs', {})
+
+        if choice == "ollama":
+            self.llm_combo.configure(state="normal")
+            self.remote_llm_button.configure(state="disabled")
+            try:
+                # This should ideally be done in a non-blocking way
+                # For now, let's assume llm_bridge can fetch models
+                if not self.llm_bridge:
+                    self.init_llm()
+                ollama_models = self.llm_bridge.handler.list_models()
+                model_names = [m['name'] for m in ollama_models]
+                self.llm_combo.configure(values=model_names)
+                if self.llm_model not in model_names and model_names:
+                    self.llm_combo.set(model_names[0])
+                else:
+                    self.llm_combo.set(self.llm_model)
+            except Exception as e:
+                self.log_message(f"Could not fetch Ollama models: {e}", "error")
+                self.llm_combo.configure(values=["ollama model not found"])
+                self.llm_combo.set("ollama model not found")
+        else:
+            self.llm_combo.configure(state="readonly")
+            self.remote_llm_button.configure(state="normal")
+            provider_config = provider_configs.get(choice, {})
+            model = provider_config.get("model", "default-model")
+            self.llm_combo.configure(values=[model])
+            self.llm_combo.set(model)
+
         self.config.set('llm_provider', choice)
         self.config.save_config()
-        self.log_message(f"Proveedor cambiado a: {choice}", "info")
+        self.log_message(f"Provider changed to: {choice}", "info")
     
     def load_config(self):
         """Carga la configuración guardada"""

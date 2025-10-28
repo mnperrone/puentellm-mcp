@@ -4,33 +4,29 @@ import os
 import sys
 import unittest
 import argparse
-from puentellm_mcp_assets.logging import setup_persistent_logging, setup_logging
+from assets.logging import PersistentLogger
 import logging
 
 def run_tests(log_file=None):
     """Ejecuta todas las pruebas del sistema."""
     # Configurar logging
-    logger = setup_logging()
-    
-    # Si se proporciona un archivo de log, configurar logging persistente
-    persistent_logger = None
-    if log_file:
-        persistent_logger = setup_persistent_logging(log_file)
-        logger.info(f"Logging persistente activado. Logs se guardarán en {log_file}")
+    logger = PersistentLogger(log_dir=os.path.dirname(log_file)).logger
+    logger.info(f"Logging persistente activado. Logs se guardarán en {log_file}")
     
     # Descubrir y ejecutar pruebas
     try:
         logger.info("Descubriendo pruebas...")
-        test_suite = unittest.defaultTestLoader.discover(start_dir='.', pattern="test_*.py")
+        test_loader = unittest.TestLoader()
+        test_suite = test_loader.discover(start_dir='tests', pattern="test_*.py")
         
         logger.info("Ejecutando pruebas...")
         result = unittest.TextTestRunner(verbosity=2).run(test_suite)
         
         # Registrar resultados
         total_tests = result.testsRun
-        successes = len(result.successes) if hasattr(result, 'successes') else 0
-        failures = len(result.failures) if hasattr(result, 'failures') else 0
-        errors = len(result.errors) if hasattr(result, 'errors') else 0
+        failures = len(result.failures)
+        errors = len(result.errors)
+        successes = total_tests - failures - errors
         
         logger.info(f"Total de pruebas: {total_tests}")
         logger.info(f"Éxitos: {successes}")
@@ -40,8 +36,6 @@ def run_tests(log_file=None):
         return result.wasSuccessful()
     except Exception as e:
         logger.error(f"Error al ejecutar pruebas: {e}", exc_info=True)
-        if persistent_logger:
-            persistent_logger.error(f"Error al ejecutar pruebas: {e}", exc_info=True)
         return False
 
 if __name__ == '__main__':

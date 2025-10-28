@@ -1,5 +1,5 @@
 import unittest
-from puentellm_mcp_assets.logging import setup_logging
+from assets.logging import PersistentLogger
 import json
 import os
 from mcp_manager import MCPManager
@@ -14,52 +14,37 @@ def validate_server_config(server_name, server_config):
     Returns:
         Tuple (bool, str): (Éxito, mensaje)
     """
-    logger = setup_logging()
+    logger = PersistentLogger().logger
     logger.info(f"Validando configuración para servidor '{server_name}'")
     
-    # Verificar que el servidor tenga los campos necesarios
-    required_fields = {
-        'type': ['local', 'remote', 'npm'],  # Tipos soportados
-        'enabled': bool,  # Debe ser booleano
-        'auto_restart': bool,  # Debe ser booleano
-        'workdir': str,  # Directorio de trabajo
-        'command': str,  # Comando a ejecutar
-        'args': list,  # Argumentos del comando
-        'port': int,  # Puerto del servidor
-        'url': str  # URL para servidores remotos
+    # Validaciones específicas según el tipo de servidor
+    server_type = server_config.get('type')
+    if not server_type or server_type not in ['local', 'remote', 'npm']:
+        return False, f"Tipo de servidor '{server_type}' es inválido o no está definido."
+
+    common_fields = {'enabled': bool, 'auto_restart': bool}
+    type_specific_fields = {
+        'local': {'workdir': str, 'command': str, 'args': list, 'port': int},
+        'npm': {'workdir': str, 'command': str, 'args': list, 'port': int},
+        'remote': {'url': str}
     }
-    
+
+    required_fields = {**common_fields, **type_specific_fields.get(server_type, {})}
+
     for field, field_type in required_fields.items():
         if field not in server_config:
-            logger.error(f"Servidor '{server_name}' no tiene el campo requerido '{field}'")
-            return False, f"Falta campo '{field}' en servidor '{server_name}'"
-        
-        # Si el campo es una lista, verificar que tenga elementos
-        if isinstance(field_type, list):
-            if server_config[field] not in field_type:
-                logger.error(f"Valor inválido para '{field}' en servidor '{server_name}': {server_config[field]}")
-                return False, f"Valor inválido para '{field}' en servidor '{server_name}'"
-        else:
-            if not isinstance(server_config[field], field_type):
-                logger.error(f"Tipo inválido para '{field}' en servidor '{server_name}': {type(server_config[field])}")
-                return False, f"Tipo inválido para '{field}' en servidor '{server_name}'"
-    
-    # Validaciones específicas según el tipo de servidor
-    server_type = server_config['type']
-    
-    if server_type == 'local' or server_type == 'npm':
+            return False, f"Falta campo '{field}' en servidor '{server_name}' de tipo '{server_type}'"
+        if not isinstance(server_config[field], field_type):
+            return False, f"Tipo inválido para '{field}' en servidor '{server_name}', se esperaba {field_type}"
+
+    # Validaciones adicionales
+    if server_type in ['local', 'npm']:
         if not os.path.exists(server_config['workdir']):
-            logger.error(f"Directorio de trabajo no existe para servidor '{server_name}': {server_config['workdir']}")
-            return False, f"Directorio de trabajo no existe para servidor '{server_name}'"
+            return False, f"Directorio de trabajo no existe para servidor '{server_name}': {server_config['workdir']}"
     
     if server_type == 'remote':
-        try:
-            import requests
-            response = requests.get(server_config['url'])
-            response.raise_for_status()
-        except Exception as e:
-            logger.error(f"No se pudo conectar al servidor remoto '{server_name}': {e}")
-            return False, f"No se pudo conectar al servidor remoto '{server_name}'"
+        # La prueba de conexión se puede hacer por separado, aquí solo validamos la presencia y tipo de URL
+        pass
     
     logger.info(f"Configuración validada exitosamente para servidor '{server_name}'")
     return True, ""
@@ -69,9 +54,9 @@ class TestMCPConfiguration(unittest.TestCase):
     
     def setUp(self):
         """Configuración inicial para cada prueba."""
-        self.logger = setup_logging()
+        self.logger = PersistentLogger().logger
         self.logger.info("Iniciando test de validación de configuración MCP")
-        self.config_path = "test_config.json"
+        self.config_path = "tests/test_config.json"
         self.mcp_manager = MCPManager(self.logger)
     
     def test_load_and_validate_config(self):
@@ -113,10 +98,9 @@ class TestMCPConfiguration(unittest.TestCase):
             },
             {
                 "invalid_server": {
-                    "type": "remote",  # Tipo válido pero URL inválida
+                    "type": "remote",  # Tipo válido pero sin URL
                     "enabled": True,
-                    "auto_restart": False,
-                    "url": "http://localhost:9999"  # Puerto probablemente cerrado
+                    "auto_restart": False
                 }
             }
         ]

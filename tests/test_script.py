@@ -1,12 +1,12 @@
 import unittest
-from puentellm_mcp_assets.logging import setup_logging
+from assets.logging import PersistentLogger
 
 class TestBasicFunctionality(unittest.TestCase):
     """Prueba funcionalidad básica del sistema con logging persistente."""
     
     def setUp(self):
         """Configuración inicial para cada prueba."""
-        self.logger = setup_logging()
+        self.logger = PersistentLogger().logger
         self.logger.info(f"Iniciando prueba: {self._testMethodName}")
         
     def tearDown(self):
@@ -17,7 +17,7 @@ class TestBasicFunctionality(unittest.TestCase):
         """Prueba funcionalidad básica de estado de servidores."""
         from mcp_manager import MCPManager
         manager = MCPManager(self.logger)
-        config_path = "test_config.json"
+        config_path = "tests/test_config.json"
         
         # Cargar configuración
         self.logger.info("Probando carga de configuración")

@@ -1,13 +1,13 @@
 import unittest
 from pathlib import Path
-from puentellm_mcp_assets.logging import setup_logging
+from assets.logging import PersistentLogger
 from mcp_manager import MCPManager
 
 def setUpModule():
     """Configuración que se ejecuta antes de todas las pruebas."""
     # Configurar logging para las pruebas
     global logger, mcp_manager
-    logger = setup_logging()
+    logger = PersistentLogger().logger
     logger.info("Iniciando configuración del módulo de pruebas")
     
     # Crear instancia de MCPManager

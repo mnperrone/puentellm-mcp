@@ -16,5 +16,17 @@ def get_llm_handler(provider_name, api_key=None, base_url=None, model=None):
         from .qwen_handler import QwenHandler
         return QwenHandler(api_key=api_key, model=model)
 
+    elif provider_name == "deepseek":
+        from .deepseek_handler import DeepSeekHandler
+        return DeepSeekHandler(api_key=api_key, model=model)
+
+    elif provider_name == "openrouter":
+        from .openrouter_handler import OpenRouterHandler
+        return OpenRouterHandler(api_key=api_key, model=model)
+
+    elif provider_name == "huggingface":
+        from .huggingface_handler import HuggingFaceHandler
+        return HuggingFaceHandler(api_key=api_key, model=model)
+
     else:
         raise ValueError(f"Proveedor no soportado: {provider_name}")

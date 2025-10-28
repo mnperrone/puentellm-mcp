@@ -4,14 +4,14 @@
 python-dotenv>=1.0.1
 strictjson>=1.0.3
 requests>=2.31.0
-modelcontextprotocol-sdk>=0.1.2
+mcp>=1.19.0
 loguru>=0.7.2
 
 # Paquetes necesarios para la interfaz gráfica
 customtkinter>=5.2.2
 
 # Paquetes necesarios para el LLM
-ollama>=1.2.0
+ollama>=0.6.0
 
 # Paquetes adicionales para pruebas
-unittest-xml-reporting>=3.5.0
+unittest-xml-reporting>=3.2.0

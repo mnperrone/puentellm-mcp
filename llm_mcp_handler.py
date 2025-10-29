@@ -11,19 +11,44 @@ class LLMMCPHandler:
     Clase para manejar la interacción entre el LLM (Lenguaje Large Model) y los servidores MCP.
     Incluye soporte para MCP (Model Context Protocol) y manejo de errores mejorado.
     """
-    def __init__(self, mcp_manager, sdk_bridge, window, chat_text):
+    def __init__(self, *args, **kwargs):
         """
         Inicializa una nueva instancia del manejador LLM-MCP.
-        Args:
-            mcp_manager: Instancia de MCPManager
-            sdk_bridge: Instancia de MCPSDKBridge
-            window: Ventana principal de la aplicación
-            chat_text: Widget de texto donde mostrar los mensajes
+        Puede ser inicializado de dos maneras:
+        1. Con mcp_manager, llm_bridge, log_callback
+        2. Con mcp_manager, sdk_bridge, window, chat_text
         """
-        self.mcp_manager = mcp_manager
-        self.sdk_bridge = sdk_bridge
-        self.window = window
-        self.chat_text = chat_text
+        print("\n=== Initializing LLMMCPHandler ===")
+        
+        # Patrón 1: mcp_manager, llm_bridge, log_callback
+        if len(args) >= 2 and hasattr(args[0], 'servers_config') and hasattr(args[1], 'list_models'):
+            print("Using initialization pattern 1 (mcp_manager, llm_bridge, log_callback)")
+            self.mcp_manager = args[0]
+            self.llm_bridge = args[1]
+            self.log_callback = args[2] if len(args) > 2 else None
+            self.window = None
+            self.chat_text = None
+            self.sdk_bridge = None
+            print(f"MCP Manager: {bool(self.mcp_manager)}")
+            print(f"LLM Bridge: {bool(self.llm_bridge)}")
+            print(f"Log Callback: {bool(self.log_callback)}")
+        # Patrón 2: mcp_manager, sdk_bridge, window, chat_text
+        elif len(args) >= 3 and hasattr(args[0], 'servers_config'):
+            self.mcp_manager = args[0]
+            self.sdk_bridge = args[1]
+            self.window = args[2]
+            self.chat_text = args[3] if len(args) > 3 else None
+            self.llm_bridge = None
+            self.log_callback = None
+        else:
+            # Manejo de parámetros por nombre
+            self.mcp_manager = kwargs.get('mcp_manager')
+            self.llm_bridge = kwargs.get('llm_bridge')
+            self.sdk_bridge = kwargs.get('sdk_bridge')
+            self.window = kwargs.get('window')
+            self.chat_text = kwargs.get('chat_text')
+            self.log_callback = kwargs.get('log_callback')
+            
         self.logger = PersistentLogger()
         self._is_closing = False
 

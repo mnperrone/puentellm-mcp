@@ -1,7 +1,11 @@
 {
-    "llm_model": "llama3",
-    "llm_provider": "ollama",
-    "api_key": "",
-    "base_url": "",
-    "last_used": "2025-06-01T14:30:00Z"
+    "llm_model": "mistralai/mistral-7b-instruct:free",
+    "llm_provider": "openrouter",
+    "llm_provider_configs": {
+        "openrouter": {
+            "api_key": "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",
+            "base_url": "https://openrouter.ai/api/v1",
+            "model": "mistralai/mistral-7b-instruct:free"
+        }
+    }
 }

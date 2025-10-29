@@ -1,34 +1,42 @@
 # llm_providers/ollama_handler.py
 
-import requests
+import ollama
+from .llm_exception import LLMConnectionError
 
 class OllamaHandler:
     def __init__(self, model="llama3"):
         self.model = model
-        self.base_url = "http://localhost:11434/api/generate"
+        try:
+            self.client = ollama.Client()
+        except Exception as e:
+            raise LLMConnectionError(f"Failed to initialize Ollama client: {e}")
 
     def generate(self, prompt):
-        payload = {
-            "model": self.model,
-            "prompt": prompt,
-            "stream": False
-        }
-        response = requests.post(self.base_url, json=payload)
-        if response.status_code == 200:
-            return response.json().get("response", "No response from model.")
-        else:
-            return f"Error: {response.status_code} - {response.text}"
+        try:
+            response = self.client.generate(model=self.model, prompt=prompt)
+            return response['response']
+        except Exception as e:
+            raise LLMConnectionError(f"Error communicating with Ollama: {e}")
 
     def stream(self, messages):
         """
-        Simula un stream de respuesta para compatibilidad con LLMBridge.
-        Devuelve un generador que produce un solo chunk con la respuesta completa.
+        Provides a streaming response from the Ollama API.
         """
-        # Extrae el prompt del último mensaje de usuario
-        prompt = ""
-        for msg in messages:
-            if msg.get("role") == "user":
-                prompt = msg.get("content", "")
-        response = self.generate(prompt)
-        yield {"message": {"content": response}}
+        try:
+            stream = self.client.chat(
+                model=self.model,
+                messages=messages,
+                stream=True,
+            )
+            for chunk in stream:
+                if chunk['message']['content']:
+                    yield {"message": {"content": chunk['message']['content']}}
+        except Exception as e:
+            raise LLMConnectionError(f"Error streaming from Ollama: {e}")
 
+    def list_models(self):
+        """Returns a list of available models from the Ollama API."""
+        try:
+            return self.client.list()["models"]
+        except Exception as e:
+            raise LLMConnectionError(f"Could not fetch models from Ollama: {e}")

@@ -15,6 +15,10 @@ class AppConfig:
         self.logger = PersistentLogger(log_dir=os.path.join(self.config_dir, 'logs'))
         self.default_config = {
             'llm_model': 'llama3',
+            # If true, remove common tokenization markers (e.g. '▁' or '<...>') from model output
+            'sanitize_model_output': True,
+            # If true, attempt to auto-insert spaces in outputs that show missing spaces
+            'auto_space_model_output': False,
         }
         self.config = self._load_config()
 

@@ -25,7 +25,32 @@ MCP (Model Context Protocol) es un protocolo abierto que estandariza cómo las a
 ### Dependencias Python
 Instala las dependencias principales con:
 ```bash
-pip install customtkinter ollama psutil
+# Dependencias principales
+pip install customtkinter==5.2.2
+pip install ollama
+pip install psutil
+
+# Para integración MCP
+pip install mcp
+pip install httpx
+pip install pydantic>=2.11.0,<3.0.0
+pip install pydantic-settings>=2.5.2
+pip install python-multipart>=0.0.9
+pip install sse-starlette>=1.6.1
+pip install starlette>=0.27
+pip install uvicorn>=0.31.1
+
+# Otras dependencias
+pip install strictjson
+pip install darkdetect  # Requerido por customtkinter
+
+# En Windows, también necesitarás:
+pip install pywin32>=310
+```
+
+O instala todo de una vez con:
+```bash
+pip install customtkinter==5.2.2 ollama psutil mcp httpx "pydantic>=2.11.0,<3.0.0" pydantic-settings>=2.5.2 python-multipart>=0.0.9 sse-starlette>=1.6.1 starlette>=0.27 uvicorn>=0.31.1 strictjson darkdetect pywin32>=310
 ```
 
 ## Estructura del proyecto
@@ -131,6 +156,24 @@ Contiene los módulos para cada proveedor de LLM:
 - `qwen_handler.py`: Handler para Qwen/Dashscope
 - `llm_exception.py`: Excepciones personalizadas para errores de conexión LLM
 - `__init__.py`: Selector dinámico de handler según proveedor
+
+## Integración con OpenRouter — sanitización y manejo de rate-limits
+
+Se ha añadido soporte mejorado para proveedores remotos tipo OpenRouter con dos mejoras importantes:
+
+- Sanitización y "auto-space": algunos modelos (por ejemplo DeepSeek) devuelven tokens con marcadores subword o palabras concatenadas. El proyecto ahora incluye:
+   - Un sanitizador conservador que reemplaza el marcador subword `▁`, elimina tokens de control entre `<...>` y colapsa espacios.
+   - Una opción opt-in llamada `auto_space_model_output` que intenta insertar espacios en casos donde el modelo devuelva palabras concatenadas. La heurística es conservadora y utiliza una segmentación basada en un pequeño diccionario de alta frecuencia en español para evitar particiones incorrectas.
+   - La opción puede activarse desde la UI en `Configuración de LLM Remoto` (casilla "Intentar corregir espacios faltantes en la salida del modelo (auto-space)") o por la variable de entorno `PUENTE_ENABLE_AUTO_SPACING=1`.
+
+- Manejo de HTTP 429 (rate limits) en streaming:
+   - El handler de OpenRouter ahora implementa reintentos explícitos para respuestas 429, respeta el header `Retry-After` cuando esté presente y aplica backoff exponencial con jitter. Esto reduce la probabilidad de fallos visibles para el usuario cuando el servicio responde temporalmente con rate limits.
+   - Si tras varios reintentos el servidor sigue devolviendo 429, la app lanzará un error informativo: "OpenRouter rate limit (HTTP 429). Espera unos segundos o revisa tu cuota/API key."
+
+Notas importantes:
+- La autocorrección de espacios es conservadora; si observas divisiones erróneas o no deseadas, desactívala desde la UI o poniendo `PUENTE_ENABLE_AUTO_SPACING=0`.
+- Si recibes muchos 429 frecuentemente, revisa la cuota/plan de la API key de OpenRouter, reduce la tasa de peticiones desde la app, o utiliza otro proveedor.
+
 
 ## Buenas prácticas y mantenimiento
 

@@ -86,3 +86,56 @@ def create_standard_dialog(parent, title, size="400x300"):
     dialog.grab_set()
     
     return dialog
+
+
+def show_error_with_details(parent, title, short_message, details):
+    """
+    Show an error messagebox with a small dialog to view full details (traceback, logs).
+    """
+    try:
+        # First show a short error message
+        import tkinter.messagebox as messagebox
+        messagebox.showerror(title, short_message, parent=parent)
+
+        # Create a dialog with the details
+        dialog = create_standard_dialog(parent, f"{title} - Detalles", size="700x400")
+        dialog_frame = tk.Frame(dialog)
+        dialog_frame.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+
+        text = tk.Text(dialog_frame, wrap=tk.NONE)
+        text.insert(tk.END, details)
+        text.configure(state=tk.DISABLED)
+        text.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
+
+        # Scrollbars
+        v = tk.Scrollbar(dialog_frame, orient=tk.VERTICAL, command=text.yview)
+        h = tk.Scrollbar(dialog_frame, orient=tk.HORIZONTAL, command=text.xview)
+        text.configure(yscrollcommand=v.set, xscrollcommand=h.set)
+        v.pack(side=tk.RIGHT, fill=tk.Y)
+        h.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # Buttons
+        btn_frame = tk.Frame(dialog)
+        btn_frame.pack(fill=tk.X, padx=6, pady=6)
+
+        def copy_and_close():
+            try:
+                parent.clipboard_clear()
+                parent.clipboard_append(details)
+            except Exception:
+                pass
+            dialog.destroy()
+
+        copy_btn = ctk.CTkButton(btn_frame, text="Copiar detalles", command=copy_and_close)
+        copy_btn.pack(side=tk.RIGHT, padx=6)
+
+        close_btn = ctk.CTkButton(btn_frame, text="Cerrar", command=dialog.destroy)
+        close_btn.pack(side=tk.RIGHT)
+
+    except Exception as e:
+        # Fall back to a simple messagebox if anything fails
+        try:
+            import tkinter.messagebox as messagebox
+            messagebox.showerror(title, f"{short_message}\n(Además, error al mostrar detalles: {e})", parent=parent)
+        except Exception:
+            print(f"{title}: {short_message}\nDetails:\n{details}")

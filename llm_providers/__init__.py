@@ -21,8 +21,13 @@ def get_llm_handler(provider_name, api_key=None, base_url=None, model=None):
         return DeepSeekHandler(api_key=api_key, model=model)
 
     elif provider_name == "openrouter":
+        print(f"\n=== Initializing OpenRouter Handler ===")
+        print(f"API Key: {'Present' if api_key else 'Missing'}")
+        print(f"Model: {model}")
         from .openrouter_handler import OpenRouterHandler
-        return OpenRouterHandler(api_key=api_key, model=model)
+        handler = OpenRouterHandler(api_key=api_key, model=model)
+        print("OpenRouter Handler initialized successfully")
+        return handler
 
     elif provider_name == "huggingface":
         from .huggingface_handler import HuggingFaceHandler

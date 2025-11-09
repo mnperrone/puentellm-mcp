@@ -64,25 +64,22 @@ git clone https://github.com/mnperrone/puentellm-mcp.git
 cd puentellm-mcp
 ```
 
-### **2. Crear entorno virtual**
+### **2. Instalar dependencias**
 ```bash
-python -m venv .venv
-# En Windows:
-.venv\Scripts\activate
-# En macOS/Linux:
-source .venv/bin/activate
+# Instalar paquetes principales (desde el directorio raíz)
+pip install customtkinter==5.2.2 ollama psutil mcp httpx "pydantic>=2.11.0,<3.0.0" pydantic-settings>=2.5.2 python-multipart>=0.0.9 sse-starlette>=1.6.1 starlette>=0.27 uvicorn>=0.31.1 strictjson darkdetect python-dotenv requests
+
+# O en Windows con pywin32:
+pip install customtkinter==5.2.2 ollama psutil mcp httpx "pydantic>=2.11.0,<3.0.0" pydantic-settings>=2.5.2 python-multipart>=0.0.9 sse-starlette>=1.6.1 starlette>=0.27 uvicorn>=0.31.1 strictjson darkdetect pywin32>=310 python-dotenv requests
 ```
 
-### **3. Instalar dependencias**
-```bash
-pip install -r requirements.txt
-```
-
-### **4. Configurar credenciales (opcional)**
+### **3. Configurar credenciales (opcional)**
 ```bash
 cp .env.example .env
 # Editar .env con tus API keys para proveedores remotos
 ```
+
+> **💡 Nota:** El proyecto **no requiere entorno virtual** para funcionar. Las dependencias se pueden instalar directamente en el sistema Python.
 
 ---
 
@@ -124,9 +121,10 @@ Con más de 340+ modelos disponibles en algunos proveedores:
 ### **Ejecutar tests**
 ```bash
 cd tests
-pip install -r requirements.txt
 python run_tests.py
 ```
+
+> **💡 Nota:** Los tests usan las mismas dependencias del proyecto principal, no requieren instalaciones adicionales.
 
 ### **Tests disponibles**
 - **✅ Validación de configuración** - Estructura y consistencia de config files
@@ -137,10 +135,10 @@ python run_tests.py
 ### **Tests de integración**
 ```bash
 # Test específico de configuración
-python tests/test_config_validation.py
+python tests/test_basic_structure.py
 
-# Test de conexión MCP
-python tests/test_mcp_connection.py
+# Test de funcionalidad core
+python tests/test_core_functionality.py
 ```
 
 ---
@@ -239,140 +237,3 @@ Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](L
 [🔝 Volver arriba](#-puentellm-mcp)
 
 </div>
-
-O instala todo de una vez con:
-```bash
-pip install customtkinter==5.2.2 ollama psutil mcp httpx "pydantic>=2.11.0,<3.0.0" pydantic-settings>=2.5.2 python-multipart>=0.0.9 sse-starlette>=1.6.1 starlette>=0.27 uvicorn>=0.31.1 strictjson darkdetect pywin32>=310
-```
-
-## Estructura del proyecto
-```
-chat_app.py        # Lógica principal de la app y orquestación de módulos
-ui_helpers.py      # Utilidades de UI y logging en el chat
-dialogs.py         # Diálogos para herramientas y argumentos
-llm_bridge.py      # Abstracción y manejo de LLM/Ollama
-llm_mcp_handler.py # Manejo de comandos MCP generados por el LLM
-mcp_sdk_bridge.py  # Integración con el SDK oficial de MCP
-mcp_manager.py     # Gestión de procesos de servidores MCP
-app_config.py      # Persistencia de configuración y preferencias
-last_llm_model.txt # Archivo de persistencia del último modelo LLM usado
-mcp_servers.json   # Configuración de servidores MCP
-LICENSE            # Licencia MIT
-README.md          # Este archivo
-```
-
-## Uso
-1. **Inicia Ollama** en tu máquina (o usa el menú LLM > Iniciar servicio Ollama).
-2. Ejecuta la app:
-   ```bash
-   python desktop_app.py
-   ```
-3. Escribe tu mensaje en el campo inferior y presiona Enter o el botón "Enviar".
-4. Usa el menú MCP para cargar o gestionar servidores MCP, descubrir y ejecutar herramientas vía SDK.
-5. Cambia el modelo LLM desde el menú LLM si lo deseas.
-6. Si la respuesta es muy larga, puedes interrumpirla con el botón "Detener respuesta".
-
-## Personalización
-- Edita `mcp_servers.json` para agregar o modificar servidores MCP.
-- El comportamiento del asistente se puede ajustar en el método `get_base_system_prompt` de `chat_app.py`.
-- Puedes ampliar la persistencia de configuración en `app_config.py`.
-
-## Notas
-- El foco del cursor se posiciona automáticamente en el campo de entrada al iniciar la app.
-- El asistente responde solo en español y de forma concisa.
-- El proyecto no requiere carpetas `.venv` ni `.idea` para funcionar.
-
-## Pruebas del sistema PuenteLLM-MCP
-
-Este directorio contiene pruebas unitarias y scripts de prueba para el sistema PuenteLLM-MCP.
-
-### Estructura del directorio de pruebas
-
-```
-tests/
-├── test_mcp_config_validation.py    # Pruebas para validación de configuración MCP
-├── test_mcp_connection.py          # Pruebas para conexión con servidores MCP
-├── run_tests.py                    # Script para ejecutar todas las pruebas
-├── test_config.json                # Archivo de configuración de prueba
-├── test_script.py                  # Script de prueba para uso directo de las funciones
-└── requirements.txt                # Requisitos para las pruebas
-```
-
-### Configuración de pruebas
-
-1. **Instalar dependencias**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Configurar archivos de prueba**:
-   - El archivo `test_config.json` define la configuración básica de servidores MCP para pruebas
-   - Asegúrate de que los comandos y rutas en el archivo de configuración sean válidos para tu entorno
-
-3. **Ejecutar pruebas**:
-   ```bash
-   python run_tests.py
-   ```
-
-### Tipos de pruebas
-
-#### 1. Validación de configuración (`test_mcp_config_validation.py`)
-
-Estas pruebas verifican que la configuración de los servidores MCP sea correcta:
-- Campos requeridos por tipo de servidor
-- Valores válidos para tipos, puertos, comandos
-- Validación de configuraciones al añadir o actualizar servidores
-
-#### 2. Conexión con servidores (`test_mcp_connection.py`)
-
-Estas pruebas verifican la capacidad de conexión con distintos tipos de servidores MCP:
-- Carga correcta de la configuración
-- Inicio y detención de servidores locales
-- Inicio y detención de servidores NPM
-- Conexión a servidores remotos
-- Obtención y validación de lista de servidores
-
-## Proveedores de LLM soportados
-
-- **Ollama** (local, por defecto)
-- **OpenAI Compatible** (API compatible, configurable)
-- **Qwen** (Dashscope)
-
-Todos los handlers de LLM implementan los métodos `generate(prompt)` y `stream(messages)` para compatibilidad total con el flujo de la app.
-
-## Carpeta llm_providers
-
-Contiene los módulos para cada proveedor de LLM:
-- `ollama_handler.py`: Handler para Ollama local
-- `openai_compatible_handler.py`: Handler para APIs OpenAI compatibles
-- `qwen_handler.py`: Handler para Qwen/Dashscope
-- `llm_exception.py`: Excepciones personalizadas para errores de conexión LLM
-- `__init__.py`: Selector dinámico de handler según proveedor
-
-## Integración con OpenRouter — sanitización y manejo de rate-limits
-
-Se ha añadido soporte mejorado para proveedores remotos tipo OpenRouter con dos mejoras importantes:
-
-- Sanitización y "auto-space": algunos modelos (por ejemplo DeepSeek) devuelven tokens con marcadores subword o palabras concatenadas. El proyecto ahora incluye:
-   - Un sanitizador conservador que reemplaza el marcador subword `▁`, elimina tokens de control entre `<...>` y colapsa espacios.
-   - Una opción opt-in llamada `auto_space_model_output` que intenta insertar espacios en casos donde el modelo devuelva palabras concatenadas. La heurística es conservadora y utiliza una segmentación basada en un pequeño diccionario de alta frecuencia en español para evitar particiones incorrectas.
-   - La opción puede activarse desde la UI en `Configuración de LLM Remoto` (casilla "Intentar corregir espacios faltantes en la salida del modelo (auto-space)") o por la variable de entorno `PUENTE_ENABLE_AUTO_SPACING=1`.
-
-- Manejo de HTTP 429 (rate limits) en streaming:
-   - El handler de OpenRouter ahora implementa reintentos explícitos para respuestas 429, respeta el header `Retry-After` cuando esté presente y aplica backoff exponencial con jitter. Esto reduce la probabilidad de fallos visibles para el usuario cuando el servicio responde temporalmente con rate limits.
-   - Si tras varios reintentos el servidor sigue devolviendo 429, la app lanzará un error informativo: "OpenRouter rate limit (HTTP 429). Espera unos segundos o revisa tu cuota/API key."
-
-Notas importantes:
-- La autocorrección de espacios es conservadora; si observas divisiones erróneas o no deseadas, desactívala desde la UI o poniendo `PUENTE_ENABLE_AUTO_SPACING=0`.
-- Si recibes muchos 429 frecuentemente, revisa la cuota/plan de la API key de OpenRouter, reduce la tasa de peticiones desde la app, o utiliza otro proveedor.
-
-
-## Buenas prácticas y mantenimiento
-
-- La interfaz de los handlers está unificada (`generate` y `stream`).
-- El código está modularizado y documentado.
-- Se recomienda mantener actualizados los requisitos en `requirements.txt` y revisar la documentación de cada proveedor MCP/LLM.
-
----
-
-Para dudas, sugerencias o reportes, me puedes contactar en mnperrone@gmail.com

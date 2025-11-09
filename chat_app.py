@@ -8,6 +8,7 @@ import time
 from mcp_manager import MCPManager
 from mcp_sdk_bridge import MCPSDKBridge
 import asyncio
+from env_manager import env_manager
 from ui_helpers import display_message, log_to_chat_on_ui_thread, show_error_with_details
 import traceback
 from llm_bridge import LLMBridge
@@ -24,10 +25,22 @@ class ChatApp:
         """Inicializa el puente LLM según el proveedor configurado"""
         print("\n=== Starting LLM Initialization ===")
         try:
+            # Verificar que la interfaz esté lista
+            if not hasattr(self, 'chat_display') or self.chat_display is None:
+                print("Interface not ready yet, deferring LLM initialization")
+                self.window.after(100, self.init_llm)
+                return False
+                
             # Cargar configuración
             print("Loading configuration...")
-            self.provider = self.config.get('llm_provider', 'ollama')
+            self.provider = self.config.get('llm_provider', '')
             # No sobrescribimos self.llm_model aquí porque ya fue configurado en __init__
+            
+            # Si no hay proveedor configurado, informar al usuario y no continuar
+            if not self.provider:
+                print("No provider configured, skipping LLM initialization")
+                self.log_message("Configuración pendiente: Selecciona un proveedor LLM en 'Configurar LLM Local/Remoto'", "info")
+                return False
             
             # Log the attempt
             print(f"Attempting to initialize LLM with provider: {self.provider}, model: {self.llm_model}")
@@ -40,10 +53,24 @@ class ChatApp:
             
             # Obtener credenciales específicas del proveedor
             print("Getting provider credentials...")
-            api_key = provider_config.get('api_key') or self.config.get(f'{self.provider}_api_key')
-            base_url = provider_config.get('base_url') or self.config.get(f'{self.provider}_base_url')
+            # Primero intentar desde variables de entorno, luego config como fallback
+            api_key = env_manager.get_api_key(self.provider) or provider_config.get('api_key', '')
+            base_url = env_manager.get_base_url(self.provider) or provider_config.get('base_url', '')
+            model = provider_config.get('model', self.llm_model)
+            
+            # Actualizar el modelo si está definido en la configuración del proveedor
+            if model and model != self.llm_model:
+                self.llm_model = model
+                print(f"Using model from provider config: {self.llm_model}")
+                
             print(f"API key found: {bool(api_key)}")
             print(f"Base URL found: {bool(base_url)}")
+            
+            # Verificar que se ha seleccionado un modelo
+            if not self.llm_model:
+                print("No model configured, skipping LLM initialization")
+                self.log_message(f"Configuración pendiente: Selecciona un modelo para {self.provider} en 'Configurar LLM Local/Remoto'", "info")
+                return False
             
             # Inicializar el manejador de LLM según el proveedor
             if self.provider == "ollama":
@@ -58,9 +85,30 @@ class ChatApp:
                 
                 # Si hay un modelo configurado, verificar si está disponible
                 if self.llm_model and not self._check_ollama_model(self.llm_model):
-                    self.llm_model = 'llama3'  # Modelo predeterminado
+                    # No asignar modelo por defecto, pedir al usuario que seleccione
+                    self.log_message(f"Modelo '{self.llm_model}' no disponible en Ollama. Por favor, selecciona un modelo disponible.", "warning")
+                    self.llm_model = ''
                     self.config.set('llm_model', self.llm_model)
                     self.config.save_config()
+                    return False
+                    
+            elif self.provider == "openrouter":
+                # Permitir inicialización incluso sin API key válida
+                # El error se mostrará cuando se intente usar el LLM
+                if not api_key:
+                    api_key = "placeholder_key_required"  # Placeholder temporal
+                    self.log_message("Configuración pendiente: Configura tu API key de OpenRouter en 'Configurar LLM Remoto'", "warning")
+                
+                from llm_bridge import LLMBridge
+                print(f"Creating LLM Bridge with model={self.llm_model}, provider={self.provider}")
+                self.llm_bridge = LLMBridge(
+                    model=self.llm_model,
+                    chat_text=self.chat_display,
+                    window=self.window,
+                    provider=self.provider,
+                    api_key=api_key,
+                    base_url=base_url or "https://openrouter.ai/api/v1"
+                )
                 
                 print("LLM initialization completed successfully")
                 
@@ -89,23 +137,8 @@ class ChatApp:
                 # Soporte para proveedores remotos definidos en provider_configs
                 # o configurados directamente mediante claves como <provider>_api_key / <provider>_base_url
                 from llm_bridge import LLMBridge
-                from llm_providers.openrouter_handler import OpenRouterHandler
 
                 try:
-                    # Primero verificar la conexión con OpenRouter
-                    print("Testing OpenRouter connection (skipped verification)...")
-                    # Create handler without forcing a network check at init to avoid
-                    # hard failures on transient DNS/network issues. Real requests will
-                    # fail later with descriptive errors if the network is unreachable.
-                    test_handler = OpenRouterHandler(
-                        api_key=api_key,
-                        base_url=base_url,
-                        model=self.llm_model,
-                        verify_on_init=False
-                    )
-                    print("OpenRouter connection test successful")
-                    
-                    # Si la conexión es exitosa, configurar el puente
                     print("Configuring LLM Bridge...")
                     self.llm_bridge = LLMBridge(
                         model=self.llm_model,
@@ -227,8 +260,8 @@ class ChatApp:
         self.mcp_manager = MCPManager(lambda msg, tag: self.log_message(msg, tag))
         self.llm_menu_popup = None
         self.config = AppConfig()
-        self.llm_model = self.config.get('llm_model') or "llama3:latest"
-        self.provider = self.config.get('llm_provider', 'ollama')
+        self.llm_model = self.config.get('llm_model') or ""
+        self.provider = self.config.get('llm_provider', '')
         self.sdk_bridge = MCPSDKBridge()
         
         # Configuración de tema
@@ -291,7 +324,7 @@ class ChatApp:
             command=self.on_provider_change,
             width=150
         )
-        self.provider_combo.set(self.provider)
+        self.provider_combo.set(self.provider if self.provider else "Seleccionar proveedor...")
         self.provider_combo.grid(row=0, column=1, padx=5, pady=10)
 
         # Model Selector
@@ -300,7 +333,7 @@ class ChatApp:
         if self.provider == "openrouter":
             self.llm_combo.configure(values=[self.llm_model])
             self.llm_combo.configure(state="readonly")
-        self.llm_combo.set(self.llm_model)
+        self.llm_combo.set(self.llm_model if self.llm_model else "Seleccionar modelo...")
         self.llm_combo.grid(row=0, column=3, padx=5, pady=10)
 
         # Remote LLM Config Button
@@ -1006,11 +1039,23 @@ class ChatApp:
                 if model:
                     self.config.set('llm_model', model)
 
-                # Guardar la API key y URL base específicas del proveedor
+                # Guardar credenciales sensibles en .env y configuración no sensible en JSON
+                provider_configs = self.config.get('llm_provider_configs', {})
+                if provider not in provider_configs:
+                    provider_configs[provider] = {}
+                
+                # Guardar API key en .env (no en JSON)
                 if api_key:
-                    self.config.set(f'{provider}_api_key', api_key)
+                    env_manager.save_to_env_file(provider, api_key=api_key, base_url=base_url)
+                    # NO guardar en JSON: provider_configs[provider]['api_key'] = api_key
+                
+                # Solo guardar URL base y modelo en JSON (no sensibles)
                 if base_url:
-                    self.config.set(f'{provider}_base_url', base_url)
+                    provider_configs[provider]['base_url'] = base_url
+                if model:
+                    provider_configs[provider]['model'] = model
+                    
+                self.config.set('llm_provider_configs', provider_configs)
 
                 self.config.save_config()
 
@@ -1041,14 +1086,22 @@ class ChatApp:
     
     def on_provider_change(self, choice):
         """Handles the logic when the LLM provider is changed."""
+        
+        # Verificar si es el placeholder
+        if choice == "Seleccionar proveedor...":
+            return
+            
         self.provider = choice
         provider_configs = self.config.get('llm_provider_configs', {})
 
         if choice == "openrouter":
-            # For OpenRouter, use the configured model or default to mistral
-            model = self.config.get('llm_model') or "mistralai/mistral-7b-instruct:free"
-            self.llm_combo.configure(values=[model])
-            self.llm_combo.set(model)
+            # For OpenRouter, use the configured model or show placeholder
+            current_model = self.config.get('llm_model') or ""
+            default_model = "mistralai/mistral-7b-instruct:free"
+            display_model = current_model if current_model else default_model
+            
+            self.llm_combo.configure(values=[display_model])
+            self.llm_combo.set(display_model if current_model else "Seleccionar modelo...")
             self.llm_combo.configure(state="readonly")
             self.remote_llm_button.configure(state="normal")
 
@@ -1056,28 +1109,38 @@ class ChatApp:
             self.llm_combo.configure(state="normal")
             self.remote_llm_button.configure(state="disabled")
             try:
-                # This should ideally be done in a non-blocking way
-                # For now, let's assume llm_bridge can fetch models
-                if not self.llm_bridge:
-                    self.init_llm()
-                ollama_models = self.llm_bridge.handler.list_models()
-                model_names = [m['name'] for m in ollama_models]
-                self.llm_combo.configure(values=model_names)
-                if self.llm_model not in model_names and model_names:
-                    self.llm_combo.set(model_names[0])
+                # Solo intentar obtener modelos si Ollama está disponible
+                if self.llm_bridge and self.llm_bridge.handler:
+                    ollama_models = self.llm_bridge.handler.list_models()
+                    model_names = [m['name'] for m in ollama_models]
+                    self.llm_combo.configure(values=model_names)
+                    current_model = self.config.get('llm_model') or ""
+                    if current_model and current_model in model_names:
+                        self.llm_combo.set(current_model)
+                    elif model_names:
+                        self.llm_combo.set("Seleccionar modelo...")
+                    else:
+                        self.llm_combo.set("No hay modelos disponibles")
                 else:
-                    self.llm_combo.set(self.llm_model)
+                    # Ollama no está disponible
+                    self.llm_combo.configure(values=["Ollama no disponible"])
+                    self.llm_combo.set("Configurar Ollama primero")
             except Exception as e:
-                self.log_message(f"Could not fetch Ollama models: {e}", "error")
-                self.llm_combo.configure(values=["ollama model not found"])
-                self.llm_combo.set("ollama model not found")
+                self.log_message(f"Could not fetch Ollama models: {e}", "warning")
+                self.llm_combo.configure(values=["Error obteniendo modelos"])
+                self.llm_combo.set("Configurar Ollama primero")
         else:
+            # Otros proveedores remotos
             self.llm_combo.configure(state="readonly")
             self.remote_llm_button.configure(state="normal")
             provider_config = provider_configs.get(choice, {})
-            model = provider_config.get("model", "default-model")
-            self.llm_combo.configure(values=[model])
-            self.llm_combo.set(model)
+            model = provider_config.get("model", "")
+            if model:
+                self.llm_combo.configure(values=[model])
+                self.llm_combo.set(model)
+            else:
+                self.llm_combo.configure(values=["Configurar modelo"])
+                self.llm_combo.set("Configurar en ⚙️")
 
         self.config.set('llm_provider', choice)
         self.config.save_config()

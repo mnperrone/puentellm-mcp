@@ -1,11 +1,13 @@
 {
-    "llm_model": "mistralai/mistral-7b-instruct:free",
+    "llm_model": "moonshotai/kimi-k2:free",
     "llm_provider": "openrouter",
     "llm_provider_configs": {
         "openrouter": {
-            "api_key": "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",
+            "_comment": "API keys now managed in .env file - see .env.example",
             "base_url": "https://openrouter.ai/api/v1",
-            "model": "mistralai/mistral-7b-instruct:free"
+            "model": "moonshotai/kimi-k2:free"
         }
-    }
+    },
+    "sanitize_model_output": true,
+    "auto_space_model_output": false
 }

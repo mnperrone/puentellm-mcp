@@ -1,60 +1,99 @@
 #!/usr/bin/env python3
-"""Script para ejecutar las pruebas del sistema PuenteLLM-MCP con logging persistente."""
+"""
+Script principal para ejecutar todos los tests de PuenteLLM-MCP
+"""
+
 import os
 import sys
-import unittest
-import argparse
-from assets.logging import PersistentLogger
-import logging
+import subprocess
+import json
+from pathlib import Path
 
-def run_tests(log_file=None):
-    """Ejecuta todas las pruebas del sistema."""
-    # Configurar logging
-    logger = PersistentLogger(log_dir=os.path.dirname(log_file)).logger
-    logger.info(f"Logging persistente activado. Logs se guardarán en {log_file}")
+def run_test_file(test_file):
+    """Ejecuta un archivo de test específico"""
+    print(f"\n🧪 Ejecutando {test_file}...")
+    print("="*50)
     
-    # Descubrir y ejecutar pruebas
     try:
-        logger.info("Descubriendo pruebas...")
-        test_loader = unittest.TestLoader()
-        test_suite = test_loader.discover(start_dir='tests', pattern="test_*.py")
+        result = subprocess.run([sys.executable, test_file], 
+                              capture_output=True, text=True, cwd=Path(__file__).parent)
         
-        logger.info("Ejecutando pruebas...")
-        result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+        if result.returncode == 0:
+            print(f"✅ {test_file} - ÉXITO")
+            if result.stdout:
+                print(result.stdout)
+        else:
+            print(f"❌ {test_file} - FALLO")
+            if result.stdout:
+                print("STDOUT:", result.stdout)
+            if result.stderr:
+                print("STDERR:", result.stderr)
         
-        # Registrar resultados
-        total_tests = result.testsRun
-        failures = len(result.failures)
-        errors = len(result.errors)
-        successes = total_tests - failures - errors
-        
-        logger.info(f"Total de pruebas: {total_tests}")
-        logger.info(f"Éxitos: {successes}")
-        logger.info(f"Fallos: {failures}")
-        logger.info(f"Errores: {errors}")
-        
-        return result.wasSuccessful()
+        return result.returncode == 0
+    
     except Exception as e:
-        logger.error(f"Error al ejecutar pruebas: {e}", exc_info=True)
+        print(f"❌ Error ejecutando {test_file}: {e}")
         return False
 
-if __name__ == '__main__':
-    # Parsear argumentos de línea de comandos
-    parser = argparse.ArgumentParser(description="Ejecutar pruebas del sistema PuenteLLM-MCP")
-    parser.add_argument('--log-file', '-l', 
-                        help="Ruta al archivo de log persistente", 
-                        default="~/.puentellm-mcp/test_logs/system_test.log")
-    args = parser.parse_args()
+def main():
+    """Función principal que ejecuta todos los tests"""
+    print("🚀 Iniciando Test Suite de PuenteLLM-MCP")
+    print("="*60)
     
-    # Expandir ~ a directorio home si está presente
-    log_path = os.path.expanduser(args.log_file)
-    log_dir = os.path.dirname(log_path)
+    # Cambiar al directorio de tests
+    test_dir = Path(__file__).parent
+    os.chdir(test_dir)
     
-    # Crear directorio para logs si no existe
-    os.makedirs(log_dir, exist_ok=True)
+    # Lista de tests a ejecutar
+    test_files = [
+        "test_basic_structure.py",
+        "test_core_functionality.py"
+    ]
     
-    # Ejecutar pruebas
-    success = run_tests(log_path)
+    # Verificar que los archivos de test existen
+    existing_tests = []
+    for test_file in test_files:
+        if Path(test_file).exists():
+            existing_tests.append(test_file)
+        else:
+            print(f"⚠️  Test no encontrado: {test_file}")
     
-    # Salir con código adecuado
-    sys.exit(0 if success else 1)
+    if not existing_tests:
+        print("❌ No se encontraron archivos de test para ejecutar")
+        sys.exit(1)
+    
+    print(f"📋 Tests a ejecutar: {len(existing_tests)}")
+    for test in existing_tests:
+        print(f"   • {test}")
+    
+    # Ejecutar tests
+    results = []
+    for test_file in existing_tests:
+        success = run_test_file(test_file)
+        results.append((test_file, success))
+    
+    # Resumen final
+    print(f"\n{'='*60}")
+    print("📊 RESUMEN FINAL")
+    print(f"{'='*60}")
+    
+    total_tests = len(results)
+    passed_tests = sum(1 for _, success in results if success)
+    failed_tests = total_tests - passed_tests
+    
+    print(f"Total de test suites: {total_tests}")
+    print(f"✅ Éxitos: {passed_tests}")
+    print(f"❌ Fallos: {failed_tests}")
+    
+    if failed_tests == 0:
+        print("\n🎉 ¡Todos los tests pasaron exitosamente!")
+        sys.exit(0)
+    else:
+        print(f"\n💥 {failed_tests} test suite(s) fallaron:")
+        for test_file, success in results:
+            if not success:
+                print(f"   • {test_file}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

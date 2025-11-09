@@ -55,9 +55,19 @@ class LLMBridge:
             self.logger.error(f"Model: {self.model}")
             self.logger.error(f"Base URL: {self.base_url}")
             
-            # Mostrar el error en el chat si es posible
+            # Para errores de configuración (API keys), no fallar completamente
+            if "placeholder" in str(e).lower() or "api key" in str(e).lower():
+                self.logger.info("Configuration issue detected - handler will be None until properly configured")
+                self.handler = None
+                # Mostrar mensaje informativo en lugar de error crítico
+                if self.window and self.chat_text and hasattr(self.window, 'after'):
+                    self.window.after(0, display_message, self.chat_text, 
+                                    f"Configuración pendiente: {str(e)}", "warning")
+                return  # No hacer raise para errores de configuración
+            
+            # Para otros errores técnicos, mostrar error
             if self.window and self.chat_text and hasattr(self.window, 'after'):
-                self.window.after(0, display_message, self.chat_text, f"Error inicializando LLMBridge: {str(e)}", "error")
+                self.window.after(0, display_message, self.chat_text, f"Error técnico: {str(e)}", "error")
             
             self.handler = None
             raise LLMConnectionError(error_msg)
@@ -183,6 +193,17 @@ class LLMBridge:
         print(f"System prompt: {system_prompt[:50]}...")
         print(f"User input: {user_input[:50]}...")
         print(f"Has previous MCP response: {bool(previous_mcp_response_json)}")
+        
+        # Verificar si el handler está disponible
+        if not self.handler:
+            error_msg = (
+                "LLM no configurado correctamente. "
+                "Por favor, configura tu API key en 'Configurar LLM Remoto' e intenta nuevamente."
+            )
+            print(f"Handler not available: {error_msg}")
+            if self.window.winfo_exists():
+                self.window.after(0, callback, {"content": error_msg, "final": True})
+            return
         
         messages = [{"role": "system", "content": system_prompt}]
         if previous_mcp_response_json:

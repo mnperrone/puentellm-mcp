@@ -14,12 +14,14 @@ class OpenRouterHandler:
         self.base_url = base_url or "https://openrouter.ai/api/v1"
         # Use default model if none specified
         self.model = model or "mistralai/mistral-7b-instruct:free"
+        self.provider = "openrouter"  # Add provider attribute for compatibility
+        self.response_callback = None  # Initialize response callback
         
         # Set up headers according to OpenRouter API requirements
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "https://github.com/mnperrone/puentellm-mcp",
-            "X-Title": "PuenteLLM MCP",
+            "HTTP-Referer": "https://github.com/mnperrone/puentellm-mcp",  # Required by OpenRouter
+            "X-Title": "PuenteLLM MCP",  # Application name
             "Content-Type": "application/json",
             "Accept": "application/json",
             "User-Agent": "PuenteLLM/1.0.0"
@@ -45,14 +47,6 @@ class OpenRouterHandler:
         )
         self.session.mount("https://", adapter)
         
-        # Headers required by OpenRouter API
-        self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "https://github.com/mnperrone/puentellm-mcp",  # Required by OpenRouter
-            "X-Title": "PuenteLLM MCP",  # Application name
-            "Content-Type": "application/json"
-        }
-        
         print(f"Initializing OpenRouter handler with URL: {self.base_url}")
         print(f"Model: {self.model}")
         
@@ -60,6 +54,101 @@ class OpenRouterHandler:
         # verification to avoid hard failures on transient DNS/network issues.
         if verify_on_init:
             self._verify_connection()
+            
+    def set_response_callback(self, callback):
+        """Set a callback function to handle streaming responses.
+        
+        Args:
+            callback: A function that will be called with each chunk of the response.
+        """
+        self.response_callback = callback
+        
+    def set_mcp_handler(self, mcp_handler):
+        """Set the MCP handler instance for this LLM handler.
+        
+        Args:
+            mcp_handler: The MCP handler instance to use for processing MCP commands.
+        """
+        self.mcp_handler = mcp_handler
+        print(f"MCP handler set for OpenRouter: {mcp_handler.__class__.__name__}")
+        
+    def generate_response(self, message, **kwargs):
+        """Generate a response to the given message using the OpenRouter API.
+        
+        Args:
+            message: The user's message to respond to.
+            **kwargs: Additional arguments for the API call.
+            
+        Returns:
+            The generated response text.
+        """
+        endpoint = f"{self.base_url}/chat/completions"
+        
+        messages = [
+            {"role": "user", "content": message}
+        ]
+        
+        data = {
+            "model": self.model,
+            "messages": messages,
+            "stream": self.response_callback is not None,  # Enable streaming if callback is set
+            **kwargs
+        }
+        
+        try:
+            if self.response_callback:
+                # Handle streaming response
+                with self.session.post(
+                    endpoint,
+                    headers=self.headers,
+                    json=data,
+                    stream=True
+                ) as response:
+                    if response.status_code != 200:
+                        error_msg = f"Error en la respuesta de OpenRouter: {response.status_code} - {response.text}"
+                        self.response_callback(error_msg, error=True)
+                        return error_msg
+                        
+                    full_response = ""
+                    for line in response.iter_lines():
+                        if line:
+                            chunk = json.loads(line)
+                            if 'choices' in chunk and chunk['choices']:
+                                delta = chunk['choices'][0].get('delta', {})
+                                if 'content' in delta:
+                                    content = delta['content']
+                                    full_response += content
+                                    self.response_callback(content)
+                    
+                    return full_response
+            else:
+                # Handle non-streaming response
+                response = self.session.post(
+                    endpoint,
+                    headers=self.headers,
+                    json=data
+                )
+                
+                if response.status_code != 200:
+                    error_msg = f"Error en la respuesta de OpenRouter: {response.status_code} - {response.text}"
+                    if self.response_callback:
+                        self.response_callback(error_msg, error=True)
+                    return error_msg
+                
+                result = response.json()
+                if 'choices' in result and result['choices']:
+                    return result['choices'][0]['message']['content']
+                else:
+                    error_msg = "No se pudo obtener una respuesta válida del modelo."
+                    if self.response_callback:
+                        self.response_callback(error_msg, error=True)
+                    return error_msg
+                    
+        except Exception as e:
+            error_msg = f"Error al generar la respuesta: {str(e)}"
+            if self.response_callback:
+                self.response_callback(error_msg, error=True)
+            return error_msg
 
     def _verify_connection(self):
         """Verifica la conexión con OpenRouter y valida el API key"""
@@ -214,9 +303,28 @@ class OpenRouterHandler:
     def stream(self, messages):
         """Stream a chat completion for the given messages."""
         try:
+            # Check for placeholder API keys before making the request
+            placeholder_keys = [
+                "your_actual_openrouter_api_key_here",
+                "sk-or-v1-your_actual_openrouter_api_key_here", 
+                "test_key",
+                "test_openrouter_key",
+                "placeholder",
+                "placeholder_key_required"  # Agregado para manejo de inicialización
+            ]
+            if (self.api_key in placeholder_keys or 
+                "placeholder" in self.api_key.lower() or 
+                "your_" in self.api_key.lower()):
+                raise LLMConnectionError(
+                    f"Configuración requerida: Necesitas una API key válida de OpenRouter. "
+                    f"Ve a https://openrouter.ai/keys para obtener una, y configúrala en el "
+                    f"menú 'Configurar LLM Remoto' o editando app_config.json."
+                )
+            
             print("\n=== Starting OpenRouter Stream ===")
             print(f"Using model: {self.model}")
             print(f"Number of messages: {len(messages)}")
+            print(f"API Key (masked): {self.api_key[:10]}...{self.api_key[-4:] if len(self.api_key) > 14 else 'SHORT_KEY'}")
             
             data = {
                 "model": self.model,
@@ -228,6 +336,7 @@ class OpenRouterHandler:
             
             headers = self.headers.copy()
             headers["Accept"] = "text/event-stream"
+            print(f"Headers: {dict((k, v[:20]+'...' if k == 'Authorization' else v) for k, v in headers.items())}")
             
             endpoint = f"{self.base_url}/chat/completions"
             print(f"Streaming from URL: {endpoint}")
@@ -326,7 +435,28 @@ class OpenRouterHandler:
                 resp = getattr(e, 'response', None)
                 if resp is not None:
                     status_code = getattr(resp, 'status_code', None)
-                    if status_code == 429:
+                    if status_code == 401:
+                        # Special handling for 401 Unauthorized
+                        try:
+                            error_details = resp.json()
+                            detailed_msg = error_details.get('error', {}).get('message', '') if isinstance(error_details, dict) else ''
+                        except Exception:
+                            detailed_msg = resp.text if hasattr(resp, 'text') else ''
+                        
+                        print(f"API Key being used: {self.api_key[:10]}...{self.api_key[-4:] if len(self.api_key) > 14 else 'SHORT_KEY'}")
+                        print(f"Response details: {detailed_msg}")
+                        
+                        if "cookie" in detailed_msg.lower():
+                            raise LLMConnectionError(
+                                f"Error de autenticación (401): La API key parece ser inválida o incorrecta. "
+                                f"Detalles: {detailed_msg}. Verifica que hayas configurado una API key válida de OpenRouter."
+                            )
+                        else:
+                            raise LLMConnectionError(
+                                f"Error de autenticación (401): API key inválida o expirada. "
+                                f"Detalles: {detailed_msg}. Verifica tu API key de OpenRouter."
+                            )
+                    elif status_code == 429:
                         raise LLMConnectionError(
                             "OpenRouter rate limit (HTTP 429). Espera unos segundos o revisa tu cuota/API key."
                         )

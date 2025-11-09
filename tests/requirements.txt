@@ -14,4 +14,5 @@ customtkinter>=5.2.2
 ollama>=0.6.0
 
 # Paquetes adicionales para pruebas
-unittest-xml-reporting>=3.2.0
+# Dependencias básicas para testing
+# No se requieren dependencias adicionales - usando unittest estándar

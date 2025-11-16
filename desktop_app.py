@@ -10,7 +10,10 @@ if __name__ == "__main__":
     try:
         app = ChatApp()
         if app.window.winfo_exists():
-            app.mcp_status_after_id = app.mcp_status_label.after(1000, app.update_mcp_status_label)
+            # Inicializar estado MCP de forma segura después de que todo esté listo
+            if hasattr(app, 'mcp_status_label'):
+                app.window.after(1000, app.update_mcp_status_label)
+                app.mcp_status_after_id = app.window.after(2000, lambda: app.update_mcp_status_label())
     except Exception as e:
         try:
             logger.log(f"Error al iniciar la aplicación: {e}")

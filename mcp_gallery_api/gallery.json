@@ -1,0 +1,110 @@
+[
+  {
+    "id": "weather-server-python",
+    "name": "Weather Server Python",
+    "description": "Servidor MCP en Python para consultar información meteorológica desde diferentes APIs como OpenWeatherMap. Incluye soporte para pronósticos y datos históricos.",
+    "icon": "http://localhost:8000/static/icons/weather.png",
+    "manifest_url": "http://localhost:8000/static/manifests/weather-server-python.json",
+    "version": "1.0.0",
+    "min_client_version": "1.0.0",
+    "checksum": "sha256:a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890",
+    "signature_url": "http://localhost:8000/static/signatures/weather-server-python.sig",
+    "tags": ["weather", "api", "python", "openweathermap"]
+  },
+  {
+    "id": "github-issues",
+    "name": "GitHub Issues Manager",
+    "description": "Gestiona issues, pull requests y repositorios de GitHub a través de la API oficial. Permite crear, editar, cerrar y consultar issues con soporte completo para labels y milestone.",
+    "icon": "http://localhost:8000/static/icons/github.png", 
+    "manifest_url": "http://localhost:8000/static/manifests/github-issues.json",
+    "version": "1.2.0",
+    "min_client_version": "1.0.0",
+    "checksum": "sha256:b2c3d4e5f6789012345678901234567890123456789012345678901234567890a1",
+    "signature_url": "http://localhost:8000/static/signatures/github-issues.sig",
+    "tags": ["github", "devops", "productivity", "api"]
+  },
+  {
+    "id": "file-manager",
+    "name": "Advanced File Manager",
+    "description": "Sistema avanzado de gestión de archivos con capacidades de búsqueda, manipulación y organización de directorios y archivos del sistema. Incluye operaciones CRUD completas.",
+    "icon": "http://localhost:8000/static/icons/folder.png",
+    "manifest_url": "http://localhost:8000/static/manifests/file-manager.json", 
+    "version": "2.1.0",
+    "min_client_version": "1.1.0",
+    "checksum": "sha256:c3d4e5f6789012345678901234567890123456789012345678901234567890a1b2",
+    "signature_url": "http://localhost:8000/static/signatures/file-manager.sig",
+    "tags": ["filesystem", "utilities", "management", "crud"]
+  },
+  {
+    "id": "database-query",
+    "name": "Database Query Tool", 
+    "description": "Herramienta para ejecutar consultas SQL en diferentes bases de datos (PostgreSQL, MySQL, SQLite) con validación, formateo y análisis de performance.",
+    "icon": "http://localhost:8000/static/icons/database.png",
+    "manifest_url": "http://localhost:8000/static/manifests/database-query.json",
+    "version": "1.5.3",
+    "min_client_version": "1.0.0",
+    "checksum": "sha256:d4e5f6789012345678901234567890123456789012345678901234567890a1b2c3",
+    "signature_url": "http://localhost:8000/static/signatures/database-query.sig",
+    "tags": ["database", "sql", "query", "postgresql", "mysql", "sqlite"]
+  },
+  {
+    "id": "web-scraper",
+    "name": "Web Scraper Pro",
+    "description": "Extrae datos estructurados de sitios web usando selectores CSS, XPath y expresiones regulares. Incluye manejo de JavaScript, cookies, sessions y captchas básicos.",
+    "icon": "http://localhost:8000/static/icons/web.png",
+    "manifest_url": "http://localhost:8000/static/manifests/web-scraper.json",
+    "version": "3.0.1",
+    "min_client_version": "1.2.0",
+    "checksum": "sha256:e5f6789012345678901234567890123456789012345678901234567890a1b2c3d4",
+    "signature_url": "http://localhost:8000/static/signatures/web-scraper.sig",
+    "tags": ["web", "scraping", "extraction", "automation", "css", "xpath"]
+  },
+  {
+    "id": "email-client",
+    "name": "Email Integration", 
+    "description": "Cliente de email completo que permite enviar, recibir y gestionar correos electrónicos a través de SMTP, IMAP y POP3. Soporte para attachments y HTML.",
+    "icon": "http://localhost:8000/static/icons/email.png",
+    "manifest_url": "http://localhost:8000/static/manifests/email-client.json",
+    "version": "1.8.0",
+    "min_client_version": "1.1.0",
+    "checksum": "sha256:f6789012345678901234567890123456789012345678901234567890a1b2c3d4e5",
+    "signature_url": "http://localhost:8000/static/signatures/email-client.sig",
+    "tags": ["email", "smtp", "imap", "communication", "attachments"]
+  },
+  {
+    "id": "ai-image-gen",
+    "name": "AI Image Generator",
+    "description": "Genera imágenes usando modelos de IA como DALL-E, Stable Diffusion y Midjourney. Incluye edición avanzada, mejoras automáticas y múltiples estilos artísticos.",
+    "icon": "http://localhost:8000/static/icons/ai.png",
+    "manifest_url": "http://localhost:8000/static/manifests/ai-image-gen.json",
+    "version": "2.3.0",
+    "min_client_version": "1.3.0", 
+    "checksum": "sha256:6789012345678901234567890123456789012345678901234567890a1b2c3d4e5f",
+    "signature_url": "http://localhost:8000/static/signatures/ai-image-gen.sig",
+    "tags": ["ai", "image", "generation", "dall-e", "stable-diffusion", "art"]
+  },
+  {
+    "id": "code-analyzer", 
+    "name": "Code Quality Analyzer",
+    "description": "Analiza la calidad del código fuente en múltiples lenguajes, detecta code smells, vulnerabilidades de seguridad y sugiere mejoras automáticas. Incluye métricas detalladas.",
+    "icon": "http://localhost:8000/static/icons/code.png",
+    "manifest_url": "http://localhost:8000/static/manifests/code-analyzer.json",
+    "version": "1.7.2", 
+    "min_client_version": "1.0.0",
+    "checksum": "sha256:789012345678901234567890123456789012345678901234567890a1b2c3d4e5f6",
+    "signature_url": "http://localhost:8000/static/signatures/code-analyzer.sig",
+    "tags": ["code", "quality", "analysis", "security", "refactoring", "metrics"]
+  },
+  {
+    "id": "local-weather-existing",
+    "name": "Local Weather Server",
+    "description": "Este es el servidor weather local que ya existe en el proyecto. Consulta información meteorológica básica.",
+    "icon": "http://localhost:8000/static/icons/weather-local.png",
+    "manifest_url": "http://localhost:8000/static/manifests/local-weather-existing.json",
+    "version": "1.0.0",
+    "min_client_version": "1.0.0",
+    "checksum": "sha256:existing123456789012345678901234567890123456789012345678901234567890",
+    "signature_url": "http://localhost:8000/static/signatures/local-weather-existing.sig",
+    "tags": ["weather", "local", "basic"]
+  }
+]

@@ -27,12 +27,95 @@ class MCPManager:
         self.servers_config = {}
         self.active_processes = {}
         self.server_ports = {}
-        if app_logger_func:
-            self.logger = app_logger_func
+        
+        # Configurar logger correctamente
+        if app_logger_func and callable(app_logger_func):
+            # Si es una función, usarla para logging (compatibilidad)
+            self._log_func = app_logger_func
+            self.logger = self._create_logger_wrapper()
         else:
-            self.logger = PersistentLogger().logger
+            # Usar PersistentLogger por defecto
+            try:
+                self.logger = PersistentLogger().logger
+            except Exception:
+                # Fallback a print si falla PersistentLogger
+                self.logger = self._create_print_logger()
+                
         self._stop_events = {}
         self.running = True
+    
+    def _create_logger_wrapper(self):
+        """Crea un wrapper para convertir función en objeto logger."""
+        class LoggerWrapper:
+            def __init__(self, log_func):
+                self.log_func = log_func
+            
+            def info(self, message):
+                # Verificar si la función espera un tag
+                try:
+                    # Intentar llamar con dos argumentos (msg, tag)
+                    self.log_func(f"INFO: {message}", "INFO")
+                except TypeError:
+                    # Si falla, llamar solo con el mensaje
+                    try:
+                        self.log_func(f"INFO: {message}")
+                    except Exception:
+                        print(f"INFO: {message}")
+            
+            def error(self, message):
+                # Verificar si la función espera un tag
+                try:
+                    # Intentar llamar con dos argumentos (msg, tag)
+                    self.log_func(f"ERROR: {message}", "ERROR")
+                except TypeError:
+                    # Si falla, llamar solo con el mensaje
+                    try:
+                        self.log_func(f"ERROR: {message}")
+                    except Exception:
+                        print(f"ERROR: {message}")
+                        
+            def warning(self, message):
+                # Verificar si la función espera un tag
+                try:
+                    # Intentar llamar con dos argumentos (msg, tag)
+                    self.log_func(f"WARNING: {message}", "WARNING")
+                except TypeError:
+                    # Si falla, llamar solo con el mensaje
+                    try:
+                        self.log_func(f"WARNING: {message}")
+                    except Exception:
+                        print(f"WARNING: {message}")
+                        
+            def debug(self, message):
+                # Verificar si la función espera un tag
+                try:
+                    # Intentar llamar con dos argumentos (msg, tag)
+                    self.log_func(f"DEBUG: {message}", "DEBUG")
+                except TypeError:
+                    # Si falla, llamar solo con el mensaje
+                    try:
+                        self.log_func(f"DEBUG: {message}")
+                    except Exception:
+                        print(f"DEBUG: {message}")
+        
+        return LoggerWrapper(self._log_func)
+    
+    def _create_print_logger(self):
+        """Crea un logger básico usando print."""
+        class PrintLogger:
+            def info(self, message):
+                print(f"INFO: {message}")
+            
+            def error(self, message):
+                print(f"ERROR: {message}")
+                
+            def warning(self, message):
+                print(f"WARNING: {message}")
+                
+            def debug(self, message):
+                print(f"DEBUG: {message}")
+        
+        return PrintLogger()
 
     def get_default_config_path(self):
         if getattr(sys, 'frozen', False):
@@ -154,6 +237,21 @@ class MCPManager:
 
     def get_active_server_names(self):
         return [name for name, config in self.servers_config.get("mcpServers", {}).items() if config.get("enabled", True)]
+
+    def get_servers(self):
+        """
+        Devuelve información de todos los servidores configurados con su estado activo.
+        
+        Returns:
+            dict: Diccionario con nombre del servidor como key y configuración + estado como value
+        """
+        servers = {}
+        for name, config in self.servers_config.get("mcpServers", {}).items():
+            # Agregar información del estado activo
+            server_info = config.copy()
+            server_info["active"] = self.is_server_running(name)
+            servers[name] = server_info
+        return servers
 
     def get_client(self, server_name):
         """Returns a client for the specified server."""
@@ -311,11 +409,74 @@ class MCPManager:
             self.logger.error(f"Excepción en comunicación con {server_name}: {e}"); return {"error": {"code":-4, "message":str(e)}}
 
     def is_server_running(self, server_name):
-        """Verifica si un servidor MCP está en ejecución."""
+        """Verifica si un servidor MCP está en ejecución - VERSION OPTIMIZADA"""
+        
+        # OPTIMIZACIÓN: Solo verificar procesos activos para evitar lentitud
         process = self.active_processes.get(server_name)
-        if not process:
+        if process and process.poll() is None:
+            return True
+        
+        try:
+            server_config = self.servers_config.get("mcpServers", {}).get(server_name, {})
+            
+            # Si el servidor no está habilitado, considerarlo inactivo
+            if not server_config.get("enabled", True):
+                return False
+            
+            # Para servidores remotos, considerarlos activos si están habilitados
+            if server_config.get("type") == "remote":
+                return True
+            
+            # DESHABILITADO: Verificación de paquetes npm para evitar lentitud
+            # Para paquetes npm, asumir que están disponibles si están configurados
+            if (server_config.get("command") == "npx" and 
+                server_config.get("type") == "package"):
+                return True  # Asumir disponible sin verificar npm
+                
+        except Exception as e:
+            self.logger.error(f"Error checking if server '{server_name}' is running: {e}")
+            
+        return False
+    
+    def _check_npm_package_installed(self, server_config):
+        """Verificar si un paquete npm está instalado globalmente"""
+        package_name = self._get_npm_package_name(server_config)
+        if not package_name:
             return False
-        return process.poll() is None
+            
+        import subprocess
+        import platform
+        
+        npm_cmd = "npm.cmd" if platform.system() == "Windows" else "npm"
+        
+        try:
+            result = subprocess.run([npm_cmd, "list", "-g", "--depth=0"], 
+                                  capture_output=True, text=True, timeout=5)  # Reducir timeout
+            if result.returncode == 0:
+                return package_name in result.stdout
+            else:
+                return False
+        except subprocess.TimeoutExpired:
+            # Si npm toma demasiado tiempo, asumir que no está disponible
+            return False
+        except Exception:
+            return False
+    
+    def _get_npm_package_name(self, server_config):
+        """Extraer el nombre del paquete npm de la configuración"""
+        if "args" not in server_config:
+            return None
+        
+        args = server_config["args"]
+        
+        # Buscar el paquete en los argumentos (generalmente después de -y)
+        for i, arg in enumerate(args):
+            if arg == "-y" and i + 1 < len(args):
+                return args[i + 1]
+            if arg.startswith("@modelcontextprotocol/"):
+                return arg
+        
+        return None
 
     def save_config(self, filepath=None):
         """Guarda la configuración actual de servidores MCP en un archivo JSON."""

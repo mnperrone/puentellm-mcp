@@ -1,0 +1,451 @@
+{
+  "docker_mcp_servers": [
+    {
+      "name": "mcp-playwright",
+      "title": "Playwright Web Automation",
+      "description": "Servidor MCP para automatización web con Playwright. Permite controlar navegadores, hacer scraping y automatizar tareas web.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/playwright",
+      "license": "MIT",
+      "categories": ["web", "automation"],
+      "docker": {
+        "image": "mcp/playwright",
+        "tag": "latest",
+        "ports": ["8080:8080"],
+        "environment": {},
+        "volumes": []
+      },
+      "stats": {
+        "stars": 23,
+        "pulls": 213701
+      }
+    },
+    {
+      "name": "mcp-grafana",
+      "title": "Grafana Integration",
+      "description": "Servidor MCP para integración con Grafana. Permite consultar métricas, crear dashboards y gestionar alertas.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/grafana",
+      "license": "MIT",
+      "categories": ["monitoring", "api"],
+      "docker": {
+        "image": "mcp/grafana",
+        "tag": "latest",
+        "ports": ["8081:8080"],
+        "environment": {
+          "GRAFANA_URL": "URL de tu instancia de Grafana",
+          "GRAFANA_API_KEY": "API Key de Grafana"
+        },
+        "volumes": []
+      },
+      "stats": {
+        "stars": 18,
+        "pulls": 135525
+      }
+    },
+    {
+      "name": "mcp-fetch",
+      "title": "Web Content Fetcher",
+      "description": "Obtiene URLs de internet y extrae su contenido como markdown. Ideal para análisis de contenido web.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/fetch",
+      "license": "MIT",
+      "categories": ["web", "utility"],
+      "docker": {
+        "image": "mcp/fetch",
+        "tag": "latest",
+        "ports": ["8082:8080"],
+        "environment": {},
+        "volumes": []
+      },
+      "stats": {
+        "stars": 43,
+        "pulls": 764009
+      }
+    },
+    {
+      "name": "mcp-notion",
+      "title": "Notion Official Server",
+      "description": "Servidor MCP oficial de Notion para gestionar páginas, bases de datos y contenido en Notion.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/notion",
+      "license": "MIT",
+      "categories": ["productivity", "api"],
+      "docker": {
+        "image": "mcp/notion",
+        "tag": "latest",
+        "ports": ["8083:8080"],
+        "environment": {
+          "NOTION_TOKEN": "Token de integración de Notion"
+        },
+        "volumes": []
+      },
+      "stats": {
+        "stars": 30,
+        "pulls": 56814
+      }
+    },
+    {
+      "name": "mcp-slack",
+      "title": "Slack Integration",
+      "description": "Interactúa con Workspaces de Slack a través de la API de Slack. Envía mensajes, gestiona canales y más.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/slack",
+      "license": "MIT",
+      "categories": ["communication", "api"],
+      "docker": {
+        "image": "mcp/slack",
+        "tag": "latest",
+        "ports": ["8084:8080"],
+        "environment": {
+          "SLACK_TOKEN": "Token de bot de Slack"
+        },
+        "volumes": []
+      },
+      "stats": {
+        "stars": 22,
+        "pulls": 276117
+      }
+    },
+    {
+      "name": "mcp-postgres",
+      "title": "PostgreSQL Database",
+      "description": "Conecta con acceso de solo lectura a bases de datos PostgreSQL. Inspecciona esquemas y ejecuta consultas.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/postgres",
+      "license": "MIT",
+      "categories": ["database", "data-analysis"],
+      "docker": {
+        "image": "mcp/postgres",
+        "tag": "latest",
+        "ports": ["8085:8080"],
+        "environment": {
+          "POSTGRES_HOST": "Host de PostgreSQL",
+          "POSTGRES_PORT": "Puerto de PostgreSQL",
+          "POSTGRES_USER": "Usuario de PostgreSQL",
+          "POSTGRES_PASSWORD": "Contraseña de PostgreSQL",
+          "POSTGRES_DB": "Base de datos de PostgreSQL"
+        },
+        "volumes": []
+      },
+      "stats": {
+        "stars": 31,
+        "pulls": 155111
+      }
+    },
+    {
+      "name": "mcp-memory",
+      "title": "Memory System",
+      "description": "Sistema de memoria persistente basado en grafos de conocimiento para LLMs.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/memory",
+      "license": "MIT",
+      "categories": ["ai", "utility"],
+      "docker": {
+        "image": "mcp/memory",
+        "tag": "latest",
+        "ports": ["8086:8080"],
+        "environment": {},
+        "volumes": ["./memory-data:/app/data"]
+      },
+      "stats": {
+        "stars": 26,
+        "pulls": 114000
+      }
+    },
+    {
+      "name": "mcp-puppeteer",
+      "title": "Puppeteer Automation",
+      "description": "Automatización de navegadores y web scraping usando Puppeteer.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/puppeteer",
+      "license": "MIT",
+      "categories": ["web", "automation"],
+      "docker": {
+        "image": "mcp/puppeteer",
+        "tag": "latest",
+        "ports": ["8087:8080"],
+        "environment": {},
+        "volumes": []
+      },
+      "stats": {
+        "stars": 30,
+        "pulls": 124199
+      }
+    },
+    {
+      "name": "mcp-obsidian",
+      "title": "Obsidian Integration",
+      "description": "Servidor MCP que interactúa con Obsidian a través del plugin REST API de la comunidad.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/obsidian",
+      "license": "MIT",
+      "categories": ["productivity", "api"],
+      "docker": {
+        "image": "mcp/obsidian",
+        "tag": "latest",
+        "ports": ["8088:8080"],
+        "environment": {
+          "OBSIDIAN_API_URL": "URL de la API REST de Obsidian",
+          "OBSIDIAN_API_KEY": "Clave de API de Obsidian"
+        },
+        "volumes": []
+      },
+      "stats": {
+        "stars": 16,
+        "pulls": 31180
+      }
+    },
+    {
+      "name": "mcp-youtube-transcript",
+      "title": "YouTube Transcripts",
+      "description": "Recupera transcripciones de videos de YouTube para URLs dadas.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/youtube-transcript",
+      "license": "MIT",
+      "categories": ["content", "api"],
+      "docker": {
+        "image": "mcp/youtube-transcript",
+        "tag": "latest",
+        "ports": ["8089:8080"],
+        "environment": {},
+        "volumes": []
+      },
+      "stats": {
+        "stars": 16,
+        "pulls": 109144
+      }
+    },
+    {
+      "name": "mcp-filesystem",
+      "title": "Filesystem Access",
+      "description": "Acceso al sistema de archivos local con rutas configurables permitidas.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/filesystem",
+      "license": "MIT",
+      "categories": ["filesystem", "utility"],
+      "docker": {
+        "image": "mcp/filesystem",
+        "tag": "latest",
+        "ports": ["8090:8080"],
+        "environment": {},
+        "volumes": ["./allowed-paths:/app/allowed-paths"]
+      },
+      "stats": {
+        "stars": 27,
+        "pulls": 89761
+      }
+    },
+    {
+      "name": "mcp-duckduckgo",
+      "title": "DuckDuckGo Search",
+      "description": "Servidor MCP que proporciona capacidades de búsqueda web a través de DuckDuckGo.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/duckduckgo",
+      "license": "MIT",
+      "categories": ["search", "web"],
+      "docker": {
+        "image": "mcp/duckduckgo",
+        "tag": "latest",
+        "ports": ["8091:8080"],
+        "environment": {},
+        "volumes": []
+      },
+      "stats": {
+        "stars": 6,
+        "pulls": 142430
+      }
+    },
+    {
+      "name": "mcp-wikipedia",
+      "title": "Wikipedia Information",
+      "description": "Servidor MCP que recupera información de Wikipedia para proporcionar contexto.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/wikipedia-mcp",
+      "license": "MIT",
+      "categories": ["search", "content"],
+      "docker": {
+        "image": "mcp/wikipedia-mcp",
+        "tag": "latest",
+        "ports": ["8092:8080"],
+        "environment": {},
+        "volumes": []
+      },
+      "stats": {
+        "stars": 7,
+        "pulls": 75023
+      }
+    },
+    {
+      "name": "mcp-firecrawl",
+      "title": "Firecrawl Web Scraping",
+      "description": "Servidor MCP oficial de Firecrawl - Agrega potente web scraping y búsqueda.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/firecrawl",
+      "license": "MIT",
+      "categories": ["web", "search"],
+      "docker": {
+        "image": "mcp/firecrawl",
+        "tag": "latest",
+        "ports": ["8093:8080"],
+        "environment": {
+          "FIRECRAWL_API_KEY": "Clave de API de Firecrawl"
+        },
+        "volumes": []
+      },
+      "stats": {
+        "stars": 14,
+        "pulls": 45570
+      }
+    },
+    {
+      "name": "mcp-sequentialthinking",
+      "title": "Sequential Thinking",
+      "description": "Resolución de problemas dinámica y reflexiva a través de secuencias de pensamiento.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/sequentialthinking",
+      "license": "MIT",
+      "categories": ["ai", "productivity"],
+      "docker": {
+        "image": "mcp/sequentialthinking",
+        "tag": "latest",
+        "ports": ["8094:8080"],
+        "environment": {},
+        "volumes": []
+      },
+      "stats": {
+        "stars": 28,
+        "pulls": 144472
+      }
+    },
+    {
+      "name": "mcp-time",
+      "title": "Time & Timezone",
+      "description": "Capacidades de tiempo y conversión de zona horaria.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/time",
+      "license": "MIT",
+      "categories": ["utility"],
+      "docker": {
+        "image": "mcp/time",
+        "tag": "latest",
+        "ports": ["8095:8080"],
+        "environment": {},
+        "volumes": []
+      },
+      "stats": {
+        "stars": 8,
+        "pulls": 269164
+      }
+    },
+    {
+      "name": "mcp-azure",
+      "title": "Azure Cloud Services",
+      "description": "Servidor MCP de Azure, trayendo el poder de Azure a tus agentes.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/azure",
+      "license": "MIT",
+      "categories": ["cloud", "api"],
+      "docker": {
+        "image": "mcp/azure",
+        "tag": "latest",
+        "ports": ["8096:8080"],
+        "environment": {
+          "AZURE_TENANT_ID": "ID del tenant de Azure",
+          "AZURE_CLIENT_ID": "ID del cliente de Azure",
+          "AZURE_CLIENT_SECRET": "Secreto del cliente de Azure"
+        },
+        "volumes": []
+      },
+      "stats": {
+        "stars": 11,
+        "pulls": 27142
+      }
+    },
+    {
+      "name": "mcp-hackernews",
+      "title": "Hacker News",
+      "description": "Servidor MCP que proporciona acceso a historias, comentarios y usuarios de Hacker News.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/hackernews-mcp",
+      "license": "MIT",
+      "categories": ["content", "api"],
+      "docker": {
+        "image": "mcp/hackernews-mcp",
+        "tag": "latest",
+        "ports": ["8097:8080"],
+        "environment": {},
+        "volumes": []
+      },
+      "stats": {
+        "stars": 1,
+        "pulls": 27012
+      }
+    },
+    {
+      "name": "mcp-desktop-commander",
+      "title": "Desktop Commander",
+      "description": "Busca, actualiza, gestiona archivos y ejecuta comandos de terminal con AI.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/desktop-commander",
+      "license": "MIT",
+      "categories": ["filesystem", "automation"],
+      "docker": {
+        "image": "mcp/desktop-commander",
+        "tag": "latest",
+        "ports": ["8098:8080"],
+        "environment": {},
+        "volumes": ["./desktop:/app/desktop"]
+      },
+      "stats": {
+        "stars": 20,
+        "pulls": 94943
+      }
+    },
+    {
+      "name": "mcp-clickhouse",
+      "title": "ClickHouse Database",
+      "description": "Servidor MCP oficial de ClickHouse para análisis de datos y consultas.",
+      "author": "Docker Official",
+      "version": "latest",
+      "homepage": "https://hub.docker.com/r/mcp/clickhouse",
+      "license": "MIT",
+      "categories": ["database", "data-analysis"],
+      "docker": {
+        "image": "mcp/clickhouse",
+        "tag": "latest",
+        "ports": ["8099:8080"],
+        "environment": {
+          "CLICKHOUSE_HOST": "Host de ClickHouse",
+          "CLICKHOUSE_PORT": "Puerto de ClickHouse",
+          "CLICKHOUSE_USER": "Usuario de ClickHouse",
+          "CLICKHOUSE_PASSWORD": "Contraseña de ClickHouse"
+        },
+        "volumes": []
+      },
+      "stats": {
+        "stars": 3,
+        "pulls": 15631
+      }
+    }
+  ]
+}

@@ -6,11 +6,35 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import customtkinter as ctk
 
+# Importar display_message de ui_helpers
+try:
+    from ui_helpers import display_message
+except ImportError:
+    # Fallback si no se puede importar
+    def display_message(widget, message, tag, **kwargs):
+        if hasattr(widget, 'configure') and hasattr(widget, 'insert'):
+            try:
+                widget.configure(state="normal")
+                widget.insert(tk.END, f"[{tag}] {message}\n")
+                widget.configure(state="disabled")
+                widget.see(tk.END)
+            except Exception as e:
+                # Ignore UI errors in fallback display_message to avoid crashing the app if widget is unavailable
+                import sys
+                print(f"Error displaying message in fallback display_message: {e}", file=sys.stderr)
+
 class PersistentLogger:
     """
-    Clase para registrar logs persistentes en archivo y mostrarlos en la interfaz de usuario.
+    Clase singleton para registrar logs persistentes en archivo y mostrarlos en la interfaz de usuario.
     Combina el registro en archivo con la visualización en tiempo real en la aplicación.
     """
+    _instance = None
+    _initialized = False
+    
+    def __new__(cls, log_dir="logs", max_log_files=10):
+        if cls._instance is None:
+            cls._instance = super(PersistentLogger, cls).__new__(cls)
+        return cls._instance
     
     def __init__(self, log_dir="logs", max_log_files=10):
         """
@@ -20,10 +44,15 @@ class PersistentLogger:
             log_dir (str): Directorio donde se guardarán los archivos de log
             max_log_files (int): Número máximo de archivos de log a mantener
         """
+        # Solo inicializar una vez
+        if PersistentLogger._initialized:
+            return
+            
         self.log_dir = log_dir
         self.max_log_files = max_log_files
         self.setup_logging()
         self.ui_log_widgets = []  # Lista de widgets donde mostrar los logs
+        PersistentLogger._initialized = True
         
     def setup_logging(self):
         """Configura el sistema de logging con rotación de archivos."""
@@ -91,16 +120,33 @@ class PersistentLogger:
     def log_to_ui(self, message, tag="system"):
         """
         Muestra un mensaje de log en todos los widgets de UI registrados.
+        OPTIMIZADO: Evita bloquear el hilo principal
         
         Args:
             message (str): Mensaje a mostrar
             tag (str): Etiqueta para colorear el mensaje (ej: 'system', 'error', 'loading', etc.)
         """
+        if not self.ui_log_widgets:  # No hacer nada si no hay widgets
+            return
+            
         for widget in self.ui_log_widgets:
             try:
-                display_message(widget, message, tag, new_line_before_message=True)
-            except Exception as e:
-                self.logger.error("Error mostrando log en UI: %s", str(e))
+                # Usar after_idle para no bloquear la UI
+                if hasattr(widget, 'after_idle'):
+                    widget.after_idle(lambda w=widget, m=message, t=tag: self._safe_display_message(w, m, t))
+                else:
+                    self._safe_display_message(widget, message, tag)
+            except Exception:
+                # Ignorar errores de UI para evitar recursión en display_message
+                pass
+    
+    def _safe_display_message(self, widget, message, tag):
+        """Muestra mensaje de manera segura sin bloquear"""
+        try:
+            display_message(widget, message, tag, new_line_before_message=True)
+        except Exception:
+            # Log the exception to help with debugging UI display issues
+            self.logger.exception("Failed to display message in UI widget")
     
     def debug(self, message, *args, **kwargs):
         """Registra un mensaje de nivel DEBUG."""

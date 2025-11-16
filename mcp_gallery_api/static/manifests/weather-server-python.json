@@ -1,0 +1,70 @@
+{
+  "name": "weather-server-python",
+  "version": "1.0.0",
+  "description": "Servidor MCP para consultas meteorológicas",
+  "author": "MCP Community",
+  "license": "MIT",
+  "capabilities": {
+    "tools": [
+      {
+        "name": "get_current_weather",
+        "description": "Obtiene el clima actual de una ciudad",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "Nombre de la ciudad"
+            },
+            "units": {
+              "type": "string", 
+              "enum": ["metric", "imperial"],
+              "description": "Unidades de temperatura",
+              "default": "metric"
+            }
+          },
+          "required": ["city"]
+        }
+      },
+      {
+        "name": "get_weather_forecast",
+        "description": "Obtiene el pronóstico del tiempo para varios días",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "Nombre de la ciudad"
+            },
+            "days": {
+              "type": "integer",
+              "description": "Número de días del pronóstico",
+              "minimum": 1,
+              "maximum": 7,
+              "default": 5
+            }
+          },
+          "required": ["city"]
+        }
+      }
+    ],
+    "resources": [
+      {
+        "uri": "weather://current/{city}",
+        "description": "Datos meteorológicos actuales",
+        "mimeType": "application/json"
+      }
+    ]
+  },
+  "launch": {
+    "command": "python",
+    "args": ["weather_server.py"],
+    "env": {
+      "OPENWEATHER_API_KEY": "required"
+    }
+  },
+  "requirements": {
+    "python": ">=3.8",
+    "packages": ["requests", "json"]
+  }
+}

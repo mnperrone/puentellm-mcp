@@ -219,6 +219,14 @@ class ChatApp:
         self.dark_mode = False
         self.llm_bridge = None  # Se inicializará en init_llm
         self.llm_handler = None  # Se inicializará en init_llm
+        self.mcp_gallery_window = None  # Para controlar instancia única de galería
+        
+        # Caché para estado MCP - evitar verificaciones constantes
+        self.mcp_cache = {
+            'last_update': 0,
+            'status_text': "🔧 MCPs cargando...",
+            'update_interval': 30  # Verificar cada 30 segundos máximo
+        }
         
         # Inicializar ventana principal
         self.window = ctk.CTk()
@@ -258,6 +266,7 @@ class ChatApp:
         # Inicialización MCP y configuración
         self.ollama_stop_event = threading.Event()
         self.mcp_manager = MCPManager(lambda msg, tag: self.log_message(msg, tag))
+        self.mcp_manager.load_config()  # Cargar configuración MCP inmediatamente
         self.llm_menu_popup = None
         self.config = AppConfig()
         self.llm_model = self.config.get('llm_model') or ""
@@ -270,12 +279,15 @@ class ChatApp:
         # Crear interfaz de usuario
         self.setup_ui()
         
-        # Cargar configuración
-        self.load_config()
+        # Cargar configuración básica (sin MCP)
+        self.load_config_basic()
+        
+        # DESHABILITADO: No actualizar MCP automáticamente para evitar lentitud
+        # self.window.after(200, self.update_mcp_status)
         
         # Inicializar LLM después de cargar la configuración
         # y asegurarse de que la interfaz esté lista
-        self.window.after(100, self.init_llm)
+        self.window.after(100, self.init_llm)  # Restaurar inicialización LLM
     
     def setup_theme(self):
         """Configura el tema claro/oscuro de la aplicación"""
@@ -290,91 +302,105 @@ class ChatApp:
     
     def setup_ui(self):
         """Configura la interfaz de usuario"""
-        # Configurar el grid
+        # Configurar el grid principal del window
         self.window.grid_columnconfigure(0, weight=1)
-        self.window.grid_rowconfigure(1, weight=1)
+        self.window.grid_rowconfigure(0, weight=0)  # Top bar fijo
+        self.window.grid_rowconfigure(1, weight=1)  # Main content expandible
         
         # Crear la barra superior
         self.create_top_bar()
         
         # Crear el diseño principal
         self.create_main_layout()
+        
+        # Marcar que la app está inicializada para habilitar verificaciones pesadas
+        self.window.after(1000, lambda: setattr(self, 'app_initialized', True))
     
     def create_top_bar(self):
         """Crea la barra superior con controles de LLM"""
-        top_frame = ctk.CTkFrame(self.window, height=50, corner_radius=0)
-        top_frame.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
-
-        # Configure grid columns to layout widgets
-        top_frame.grid_columnconfigure(0, weight=0) # Provider Label
-        top_frame.grid_columnconfigure(1, weight=1) # Provider Combo
-        top_frame.grid_columnconfigure(2, weight=0) # Model Label
-        top_frame.grid_columnconfigure(3, weight=1) # Model Combo
-        top_frame.grid_columnconfigure(4, weight=0) # Configure Button
-        top_frame.grid_columnconfigure(5, weight=0) # Start/Stop Button
-        top_frame.grid_columnconfigure(6, weight=2) # Spacer
-        top_frame.grid_columnconfigure(7, weight=0) # MCP Status
-        top_frame.grid_columnconfigure(8, weight=0) # Theme Toggle
-
+        print("DEBUG: Creando top bar...")  # Debug print
+        
+        # Crear frame directamente en window
+        top_frame = ctk.CTkFrame(self.window, height=80)
+        top_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
+        top_frame.grid_propagate(False)
+        
+        print("DEBUG: Top frame creado")  # Debug print
+        
+        # Configurar grid para layout horizontal
+        top_frame.grid_columnconfigure(0, weight=0)  # Provider label
+        top_frame.grid_columnconfigure(1, weight=1)  # Provider combo
+        top_frame.grid_columnconfigure(2, weight=0)  # Model label
+        top_frame.grid_columnconfigure(3, weight=1)  # Model combo
+        top_frame.grid_columnconfigure(4, weight=0)  # Config button
+        top_frame.grid_columnconfigure(5, weight=0)  # Start/Stop button
+        top_frame.grid_columnconfigure(6, weight=0)  # MCP Status
+        top_frame.grid_columnconfigure(7, weight=0)  # Theme button
+        
         # Provider Selector
-        ctk.CTkLabel(top_frame, text="Proveedor:").grid(row=0, column=0, padx=(10, 5), pady=10)
+        ctk.CTkLabel(top_frame, text="Proveedor:").grid(row=0, column=0, padx=(10, 5), pady=20)
+        
         self.provider_combo = ctk.CTkComboBox(
             top_frame,
             values=["ollama", "openai_compatible", "qwen", "deepseek", "openrouter", "huggingface"],
-            command=self.on_provider_change,
+            command=self.on_provider_change_safe,
             width=150
         )
-        self.provider_combo.set(self.provider if self.provider else "Seleccionar proveedor...")
-        self.provider_combo.grid(row=0, column=1, padx=5, pady=10)
-
+        self.provider_combo.set(self.provider if self.provider else "Seleccionar...")
+        self.provider_combo.grid(row=0, column=1, padx=5, pady=20)
+        
         # Model Selector
-        ctk.CTkLabel(top_frame, text="Modelo:").grid(row=0, column=2, padx=(10, 5), pady=10)
+        ctk.CTkLabel(top_frame, text="Modelo:").grid(row=0, column=2, padx=(10, 5), pady=20)
+        
         self.llm_combo = ctk.CTkComboBox(top_frame, values=[], width=200)
-        if self.provider == "openrouter":
-            self.llm_combo.configure(values=[self.llm_model])
-            self.llm_combo.configure(state="readonly")
-        self.llm_combo.set(self.llm_model if self.llm_model else "Seleccionar modelo...")
-        self.llm_combo.grid(row=0, column=3, padx=5, pady=10)
-
-        # Remote LLM Config Button
+        self.llm_combo.set(self.llm_model if self.llm_model else "Seleccionar...")
+        self.llm_combo.grid(row=0, column=3, padx=5, pady=20)
+        
+        # Config button
         self.remote_llm_button = ctk.CTkButton(
-            top_frame, text="⚙️", command=self.open_remote_llm_config, width=40
+            top_frame, 
+            text="⚙️", 
+            command=self.open_remote_llm_config, 
+            width=40
         )
-        self.remote_llm_button.grid(row=0, column=4, padx=5, pady=10)
-
+        self.remote_llm_button.grid(row=0, column=4, padx=5, pady=20)
+        
         # LLM Control Button
         self.llm_control_button = ctk.CTkButton(
-            top_frame, text="▶️ Iniciar", command=self.toggle_llm, width=100
+            top_frame, 
+            text="▶️ Iniciar", 
+            command=self.toggle_llm, 
+            width=100
         )
-        self.llm_control_button.grid(row=0, column=5, padx=5, pady=10)
-
-        # Spacer
-        ctk.CTkFrame(top_frame, fg_color="transparent").grid(row=0, column=6)
-
-        # MCP Status
-        mcp_status_frame = ctk.CTkFrame(top_frame, fg_color="transparent")
-        mcp_status_frame.grid(row=0, column=7, padx=5, pady=5)
-        self.mcp_status_icon = ctk.CTkLabel(mcp_status_frame, text="🔄", font=("Segoe UI", 14))
-        self.mcp_status_icon.pack(side=tk.LEFT, padx=(10, 0))
-        self.mcp_status_label = ctk.CTkLabel(mcp_status_frame, text="MCP: ...", font=("Segoe UI", 12))
-        self.mcp_status_label.pack(side=tk.LEFT, padx=5)
-
+        self.llm_control_button.grid(row=0, column=5, padx=5, pady=20)
+        
+        # MCP Status Label
+        self.mcp_status_label = ctk.CTkLabel(
+            top_frame, 
+            text="🔧 Sin MCPs", 
+            font=("Segoe UI", 11)
+        )
+        self.mcp_status_label.grid(row=0, column=6, padx=5, pady=20)
+        
         # Theme Toggle Button
         self.theme_toggle = ctk.CTkButton(
-            top_frame, text="🌙", command=self.toggle_theme, width=40
+            top_frame, 
+            text="🌙", 
+            command=self.toggle_theme, 
+            width=40
         )
-        self.theme_toggle.grid(row=0, column=8, padx=10, pady=10)
-
-        self.update_mcp_status_label()
-        self.on_provider_change(self.provider) # Initial UI setup
+        self.theme_toggle.grid(row=0, column=7, padx=10, pady=20)
+        
+        print("DEBUG: Controles LLM agregados")  # Debug print
     
     def create_main_layout(self):
         """Crea el diseño principal de la aplicación"""
+        # Crear el main frame para el contenido principal
         main_frame = ctk.CTkFrame(self.window)
-        main_frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=(0, 5))
-        main_frame.grid_columnconfigure(0, weight=3)
-        main_frame.grid_columnconfigure(1, weight=1)
-        main_frame.grid_rowconfigure(0, weight=1)
+        main_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 10))
+        main_frame.grid_columnconfigure(0, weight=3)  # Chat area
+        main_frame.grid_columnconfigure(1, weight=1)  # Right panel
+        main_frame.grid_rowconfigure(0, weight=1)     # Main content
         
         # Marco izquierdo (chat)
         left_frame = ctk.CTkFrame(main_frame)
@@ -443,35 +469,73 @@ class ChatApp:
         right_frame = ctk.CTkFrame(main_frame)
         right_frame.grid(row=0, column=1, sticky="nsew")
         right_frame.grid_columnconfigure(0, weight=1)
-        right_frame.grid_rowconfigure(1, weight=1)
+        right_frame.grid_rowconfigure(0, weight=1)
         
         # Pestañas para logs y estado
         self.tabview = ctk.CTkTabview(right_frame)
-        self.tabview.pack(expand=True, fill=tk.BOTH, padx=5, pady=5)
+        self.tabview.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         
         # Pestaña de logs
         self.logs_tab = self.tabview.add("📝 Logs")
+        self.logs_tab.grid_columnconfigure(0, weight=1)
+        self.logs_tab.grid_rowconfigure(0, weight=1)
+        
         self.log_display = ctk.CTkTextbox(
             self.logs_tab,
             wrap=tk.WORD,
             font=("Consolas", 10),
             state=tk.DISABLED
         )
-        self.log_display.pack(expand=True, fill=tk.BOTH, padx=5, pady=5)
+        self.log_display.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         
         # Pestaña de estado MCP
         self.mcp_tab = self.tabview.add("🔌 MCP")
+        self.mcp_tab.grid_columnconfigure(0, weight=1)
+        self.mcp_tab.grid_rowconfigure(0, weight=1)
         
         # Lista de servidores MCP
         mcp_frame = ctk.CTkFrame(self.mcp_tab)
-        mcp_frame.pack(expand=True, fill=tk.BOTH, padx=5, pady=5)
+        mcp_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        mcp_frame.grid_columnconfigure(0, weight=1)
+        mcp_frame.grid_rowconfigure(0, weight=0)  # Label
+        mcp_frame.grid_rowconfigure(1, weight=0)  # Controls
+        mcp_frame.grid_rowconfigure(2, weight=1)  # Status list expandible
         
         ctk.CTkLabel(
             mcp_frame,
-            text="🟢 Servidores MCP activos:",
+            text="🔌 Servidores MCP:",
             font=("Segoe UI", 12, "bold")
-        ).pack(anchor=tk.W, pady=(0, 5))
+        ).grid(row=0, column=0, sticky="w", pady=(0, 5))
         
+        # Frame para controles de MCP
+        mcp_controls_frame = ctk.CTkFrame(mcp_frame)
+        mcp_controls_frame.grid(row=1, column=0, sticky="ew", pady=(0, 5))
+        mcp_controls_frame.grid_columnconfigure(0, weight=1)
+        mcp_controls_frame.grid_columnconfigure(1, weight=1)
+        mcp_controls_frame.grid_columnconfigure(2, weight=1)
+        
+        # Botones de control
+        ctk.CTkButton(
+            mcp_controls_frame,
+            text="⚙️ Configurar",
+            command=self.show_mcp_config,
+            width=100
+        ).grid(row=0, column=0, padx=5, pady=5)
+        
+        ctk.CTkButton(
+            mcp_controls_frame,
+            text="🔄 Actualizar",
+            command=self.update_mcp_status,
+            width=100
+        ).grid(row=0, column=1, padx=5, pady=5)
+        
+        ctk.CTkButton(
+            mcp_controls_frame,
+            text="🧩 Galería",
+            command=self.open_mcp_gallery,
+            width=100
+        ).grid(row=0, column=2, padx=5, pady=5)
+
         self.mcp_status_list = ctk.CTkTextbox(
             mcp_frame,
             wrap=tk.WORD,
@@ -479,14 +543,7 @@ class ChatApp:
             height=100,
             state=tk.DISABLED
         )
-        self.mcp_status_list.pack(expand=True, fill=tk.BOTH, pady=(0, 5))
-        
-        self.add_server_button = ctk.CTkButton(
-            mcp_frame,
-            text="➕ Agregar servidor MCP",
-            command=self.show_mcp_config
-        )
-        self.add_server_button.pack(fill=tk.X, pady=5)
+        self.mcp_status_list.grid(row=2, column=0, sticky="nsew", pady=(0, 5))
 
     def log_message(self, message, tag=None):
         """Muestra un mensaje en el área de logs"""
@@ -505,6 +562,37 @@ class ChatApp:
     
     def update_mcp_status(self):
         """Actualiza la lista de servidores MCP activos"""
+        try:
+            # Sincronizar servidores instalados desde la galería
+            from mcp_gallery_manager import MCPGalleryManager
+            
+            # Crear un wrapper del logger para compatibilidad
+            class LoggerWrapper:
+                def __init__(self, log_func):
+                    self.log_func = log_func
+                
+                def info(self, message):
+                    self.log_func(message, "info")
+                
+                def error(self, message):
+                    self.log_func(message, "error")
+                
+                def warning(self, message):
+                    self.log_func(message, "warning")
+                
+                def debug(self, message):
+                    self.log_func(message, "debug")
+            
+            logger_wrapper = LoggerWrapper(self.log_message)
+            gallery_manager = MCPGalleryManager(external_logger=logger_wrapper)
+            synced_count = gallery_manager.sync_installed_servers_to_config()
+            if synced_count > 0:
+                self.log_message(f"Sincronizados {synced_count} servidores desde la galería", "info")
+                # Recargar la configuración del mcp_manager
+                self.mcp_manager.load_config()
+        except Exception as e:
+            self.log_message(f"Error sincronizando servidores: {e}", "error")
+        
         self.mcp_status_list.configure(state=tk.NORMAL)
         self.mcp_status_list.delete(1.0, tk.END)
         
@@ -1080,9 +1168,99 @@ class ChatApp:
         if current_model and hasattr(self, 'llm_combo'):
             self.llm_combo.set(current_model)
     
+    def open_mcp_gallery(self):
+        """Abre la galería de servidores MCP (instancia única)"""
+        try:
+            # Verificar si ya existe una instancia y si está activa
+            if self.mcp_gallery_window is not None:
+                try:
+                    # Intentar hacer foco en la ventana existente
+                    if hasattr(self.mcp_gallery_window, 'window') and self.mcp_gallery_window.window.winfo_exists():
+                        self.mcp_gallery_window.window.lift()
+                        self.mcp_gallery_window.window.focus_force()
+                        self.log_message("Galería MCP ya está abierta - enfocada", "info")
+                        return
+                    else:
+                        # La ventana fue cerrada, limpiar la referencia
+                        self.mcp_gallery_window = None
+                except Exception:
+                    # Error accediendo a la ventana, limpiar la referencia
+                    self.mcp_gallery_window = None
+            
+            # Crear nueva instancia
+            from mcp_gallery_window import MCPGalleryWindow
+            
+            # Usar el mismo directorio base que la configuración de la app
+            config_dir = str(self.config.config_dir)
+            
+            self.mcp_gallery_window = MCPGalleryWindow(parent_window=self.window, config_dir=config_dir)
+            
+            # Configurar callback para limpiar la referencia cuando se cierre
+            def on_gallery_close():
+                self.mcp_gallery_window = None
+                self.update_mcp_status()  # Actualizar estado MCP cuando se cierre la galería
+            
+            # Si la galería tiene un método para configurar el callback de cierre, usarlo
+            if hasattr(self.mcp_gallery_window, 'set_close_callback'):
+                self.mcp_gallery_window.set_close_callback(on_gallery_close)
+            elif hasattr(self.mcp_gallery_window, 'window'):
+                # Configurar el protocolo de cierre de ventana
+                def close_gallery():
+                    if self.mcp_gallery_window and hasattr(self.mcp_gallery_window, 'window'):
+                        self.mcp_gallery_window.window.destroy()
+                    on_gallery_close()
+                
+                self.mcp_gallery_window.window.protocol("WM_DELETE_WINDOW", close_gallery)
+            
+            self.mcp_gallery_window.show()
+            self.log_message("Galería MCP abierta", "info")
+            
+        except ImportError as e:
+            error_msg = "La galería MCP no está disponible. Verifica que todos los módulos estén instalados."
+            messagebox.showerror("Error", error_msg)
+            self.log_message(f"Error importando galería MCP: {e}", "error")
+        except Exception as e:
+            error_msg = f"Error abriendo la galería MCP: {e}"
+            messagebox.showerror("Error", error_msg)
+            self.log_message(error_msg, "error")
+
     def show_mcp_config(self):
-        """Muestra la ventana de configuración de MCP"""
-        MCPConfigWindow(self.window, self.mcp_manager, self)
+        """Abre la ventana de configuración de servidores MCP"""
+        try:
+            from mcp_config_window import MCPConfigWindow
+            
+            # Verificar si ya hay una ventana de configuración abierta
+            if hasattr(self, 'mcp_config_window') and self.mcp_config_window and self.mcp_config_window.winfo_exists():
+                self.mcp_config_window.lift()
+                self.mcp_config_window.focus_force()
+                return
+            
+            # Crear nueva ventana de configuración
+            self.mcp_config_window = MCPConfigWindow(self.window, self.mcp_manager)
+            
+            # Configurar callback para limpiar la referencia cuando se cierre
+            def on_config_close():
+                self.mcp_config_window = None
+                self.update_mcp_status()  # Actualizar estado MCP cuando se cierre la configuración
+            
+            # Configurar el protocolo de cierre
+            def close_config():
+                if self.mcp_config_window:
+                    self.mcp_config_window.destroy()
+                on_config_close()
+            
+            self.mcp_config_window.protocol("WM_DELETE_WINDOW", close_config)
+            
+            self.log_message("Configuración MCP abierta", "info")
+            
+        except ImportError as e:
+            error_msg = "La configuración MCP no está disponible. Verifica que todos los módulos estén instalados."
+            messagebox.showerror("Error", error_msg)
+            self.log_message(f"Error importando configuración MCP: {e}", "error")
+        except Exception as e:
+            error_msg = f"Error abriendo la configuración MCP: {e}"
+            messagebox.showerror("Error", error_msg)
+            self.log_message(error_msg, "error")
     
     def on_provider_change(self, choice):
         """Handles the logic when the LLM provider is changed."""
@@ -1151,45 +1329,109 @@ class ChatApp:
         try:
             # Cargar configuración del modelo
             model = self.config.get('llm_model')
-            if model:
-                self.llm_combo.set(model)
             
             # Cargar configuración del proveedor
-            provider = self.config.get('llm_provider')
-            if provider:
-                self.provider_combo.set(provider)
             
             self.log_message("Configuración cargada correctamente", "info")
             
         except Exception as e:
             self.log_message(f"Error al cargar la configuración: {str(e)}", "error")
     
-    def update_mcp_status_label(self):
-        """Actualiza la etiqueta de estado de los servidores MCP"""
+    def load_config_basic(self):
+        """Carga la configuración básica sin elementos problemáticos"""
         try:
-            active_servers = self.mcp_manager.get_active_server_names()
-            running_servers = [s for s in active_servers if self.mcp_manager.is_server_running(s)]
-            total_active = len(active_servers)
-            total_running = len(running_servers)
+            # Cargar configuración del modelo y proveedor
+            model = self.config.get('llm_model')
+            if model and hasattr(self, 'llm_combo'):
+                self.llm_combo.set(model)
             
-            if total_active > 0:
-                status_text = f"MCP: {total_running}/{total_active} servidores activos"
-                icon_color = "green" if total_running == total_active else "orange"
-            else:
-                status_text = "MCP: No hay servidores configurados"
-                icon_color = "gray"
-                
-            if hasattr(self, 'mcp_status_label') and hasattr(self, 'mcp_status_icon'):
-                self.mcp_status_label.configure(text=status_text, text_color=icon_color)
-                self.mcp_status_icon.configure(text_color=icon_color)
+            provider = self.config.get('llm_provider')
+            if provider and hasattr(self, 'provider_combo'):
+                self.provider_combo.set(provider)
             
-            # Programar próxima actualización
-            self.window.after(5000, self.update_mcp_status_label)
+            self.log_message("Configuración básica cargada correctamente", "info")
             
         except Exception as e:
-            self.log_message(f"Error actualizando estado MCP: {str(e)}", "error")
-            # Reintentar después de un tiempo incluso si hay error
-            self.window.after(10000, self.update_mcp_status_label)
+            self.log_message(f"Error al cargar la configuración básica: {str(e)}", "error")
+    
+    def on_provider_change_safe(self, choice):
+        """Versión segura del cambio de proveedor sin dependencias problemáticas"""
+        try:
+            print(f"DEBUG: Cambiando proveedor a {choice}")
+            self.provider = choice
+            
+            # Actualizar combo de modelos básico
+            if choice == "ollama":
+                self.llm_combo.configure(values=["Configurar Ollama"])
+                self.llm_combo.set("Configurar Ollama")
+            elif choice == "openrouter":
+                self.llm_combo.configure(values=["nvidia/nemotron-nano-9b-v2:free"])
+                self.llm_combo.set("nvidia/nemotron-nano-9b-v2:free")
+            else:
+                self.llm_combo.configure(values=["Configurar modelo"])
+                self.llm_combo.set("Configurar en ⚙️")
+                
+            # Guardar en configuración
+            self.config.set('llm_provider', choice)
+            self.config.save_config()
+            self.log_message(f"Proveedor cambiado a: {choice}", "info")
+            
+        except Exception as e:
+            self.log_message(f"Error al cambiar proveedor: {e}", "error")
+    
+    def update_mcp_status_label(self):
+        """Actualiza la etiqueta de estado de los servidores MCP con caché"""
+        # Versión segura que verifica si el widget existe
+        if not hasattr(self, 'mcp_status_label'):
+            return  # Salir silenciosamente si no existe el widget
+            
+        try:
+            import time
+            current_time = time.time()
+            
+            # Si acabamos de actualizar recientemente, usar caché
+            if hasattr(self, 'mcp_cache') and (current_time - self.mcp_cache['last_update']) < self.mcp_cache['update_interval']:
+                if hasattr(self, 'mcp_status_label'):
+                    self.mcp_status_label.configure(text=self.mcp_cache['status_text'])
+                return
+            
+            # Solo conteo básico, sin verificaciones pesadas
+            if hasattr(self, 'mcp_manager'):
+                active_servers = self.mcp_manager.get_active_server_names()
+                total_active = len(active_servers)
+                
+                if total_active > 0:
+                    status_text = f"🔧 {total_active} MCPs configurados"
+                else:
+                    status_text = "🔧 Sin MCPs"
+                
+                # Actualizar caché y UI si existen
+                if hasattr(self, 'mcp_cache'):
+                    self.mcp_cache['status_text'] = status_text
+                    self.mcp_cache['last_update'] = current_time
+                    
+                if hasattr(self, 'mcp_status_label'):
+                    self.mcp_status_label.configure(text=status_text)
+            
+        except Exception as e:
+            if hasattr(self, 'log_message'):
+                self.log_message(f"Error al actualizar estado MCP: {str(e)}", "error")
+    
+    def manual_mcp_refresh(self):
+        """Actualización manual del estado MCP (solo cuando sea necesario)"""
+        try:
+            # Restablecer caché para forzar actualización
+            import time
+            self.mcp_cache['last_update'] = 0
+            self.update_mcp_status_label()  # Restaurar llamada segura
+            self.log_message("Estado MCP actualizado manualmente", "info")
+        except Exception as e:
+            self.log_message(f"Error actualizando MCPs: {e}", "error")
+
+    def update_detailed_mcp_status(self):
+        """DESHABILITADO - Actualización detallada de MCPs para evitar lentitud"""
+        # Esta función se mantiene para compatibilidad pero no hace verificaciones pesadas
+        self.update_mcp_status_label()  # Restaurar llamada segura
     
     def on_closing(self):
         """Maneja el cierre de la aplicación"""
@@ -1197,10 +1439,11 @@ class ChatApp:
             if self.llm_running:
                 self.stop_llm()
             
-            # Guardar configuración
-            self.config.set('llm_model', self.llm_combo.get())
-            self.config.set('llm_provider', self.provider_combo.get())
-            self.config.save_config()
+            # Guardar configuración básica
+            if hasattr(self, 'llm_combo') and hasattr(self, 'provider_combo'):
+                self.config.set('llm_model', self.llm_combo.get())
+                self.config.set('llm_provider', self.provider_combo.get())
+                self.config.save_config()
             
             # Cancelar la actualización periódica del estado MCP
             if hasattr(self, 'mcp_status_after_id'):

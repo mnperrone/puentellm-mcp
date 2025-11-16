@@ -1,0 +1,53 @@
+{
+  "name": "weather-server-local",
+  "version": "1.0.0",
+  "description": "Servidor MCP local para alertas meteorológicas de EE.UU.",
+  "author": "Local Team",
+  "license": "MIT",
+  "capabilities": {
+    "tools": [
+      {
+        "name": "get_alerts",
+        "description": "Obtiene alertas meteorológicas para un estado de EE.UU.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string",
+              "description": "Código de estado de dos letras (ej. CA, NY)",
+              "maxLength": 2
+            }
+          },
+          "required": ["state"]
+        }
+      },
+      {
+        "name": "get_forecast",
+        "description": "Obtiene pronóstico meteorológico para una ubicación",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "lat": {
+              "type": "number",
+              "description": "Latitud"
+            },
+            "lon": {
+              "type": "number", 
+              "description": "Longitud"
+            }
+          },
+          "required": ["lat", "lon"]
+        }
+      }
+    ]
+  },
+  "launch": {
+    "command": "python",
+    "args": ["weather-server-python/weather.py"],
+    "cwd": "../"
+  },
+  "requirements": {
+    "python": ">=3.8",
+    "packages": ["httpx", "mcp"]
+  }
+}

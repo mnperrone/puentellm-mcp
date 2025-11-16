@@ -64,29 +64,54 @@ git clone https://github.com/mnperrone/puentellm-mcp.git
 cd puentellm-mcp
 ```
 
-### **2. Instalar dependencias**
+### **2. Crear entorno virtual (recomendado)**
 ```bash
-# Instalar paquetes principales (desde el directorio raíz)
-pip install customtkinter==5.2.2 ollama psutil mcp httpx "pydantic>=2.11.0,<3.0.0" pydantic-settings>=2.5.2 python-multipart>=0.0.9 sse-starlette>=1.6.1 starlette>=0.27 uvicorn>=0.31.1 strictjson darkdetect python-dotenv requests
+# Crear entorno virtual
+python -m venv .venv
 
-# O en Windows con pywin32:
-pip install customtkinter==5.2.2 ollama psutil mcp httpx "pydantic>=2.11.0,<3.0.0" pydantic-settings>=2.5.2 python-multipart>=0.0.9 sse-starlette>=1.6.1 starlette>=0.27 uvicorn>=0.31.1 strictjson darkdetect pywin32>=310 python-dotenv requests
+# Activar entorno virtual
+# Windows:
+.venv\Scripts\activate
+# Linux/Mac:
+source .venv/bin/activate
 ```
 
-### **3. Configurar credenciales (opcional)**
+### **3. Instalar dependencias**
+```bash
+# Instalar paquetes principales (en el entorno virtual)
+pip install customtkinter==5.2.2 ollama psutil mcp httpx "pydantic>=2.11.0,<3.0.0" pydantic-settings>=2.5.2 python-multipart>=0.0.9 sse-starlette>=1.6.1 starlette>=0.27 uvicorn>=0.31.1 strictjson darkdetect python-dotenv requests pillow
+
+# O en Windows con pywin32:
+pip install customtkinter==5.2.2 ollama psutil mcp httpx "pydantic>=2.11.0,<3.0.0" pydantic-settings>=2.5.2 python-multipart>=0.0.9 sse-starlette>=1.6.1 starlette>=0.27 uvicorn>=0.31.1 strictjson darkdetect pywin32>=310 python-dotenv requests pillow
+```
+
+### **4. Configurar credenciales (opcional)**
 ```bash
 cp .env.example .env
 # Editar .env con tus API keys para proveedores remotos
 ```
 
-> **💡 Nota:** El proyecto **no requiere entorno virtual** para funcionar. Las dependencias se pueden instalar directamente en el sistema Python.
+> **💡 Nota:** Se recomienda usar un entorno virtual para evitar conflictos de dependencias, especialmente con la galería MCP que requiere Pillow/PIL.
 
 ---
 
 ## 🚀 **Uso**
 
 ### **Iniciar la aplicación**
+
+#### **Opción: Ejecutar directamente**
 ```bash
+python desktop_app.py
+```
+> **✅ Ventajas:** Inicio directo con todas las funcionalidades disponibles.
+
+#### **Opción 2: Manual**
+```bash
+# Activar entorno virtual si es necesario
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # Linux/Mac
+
+# Ejecutar aplicación
 python desktop_app.py
 ```
 

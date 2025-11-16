@@ -1,11 +1,11 @@
 {
-    "llm_model": "moonshotai/kimi-k2:free",
+    "llm_model": "arliai/qwq-32b-arliai-rpr-v1:free",
     "llm_provider": "openrouter",
     "llm_provider_configs": {
         "openrouter": {
             "_comment": "API keys now managed in .env file - see .env.example",
             "base_url": "https://openrouter.ai/api/v1",
-            "model": "moonshotai/kimi-k2:free"
+            "model": "arliai/qwq-32b-arliai-rpr-v1:free"
         }
     },
     "sanitize_model_output": true,

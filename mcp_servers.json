@@ -5,12 +5,48 @@
             "args": [
                 "-y",
                 "@modelcontextprotocol/server-filesystem",
-                "C:\\Users\\mperrone",
-                "C:\\Users\\mperrone\\Downloads",
-                "C:\\Users\\mperrone\\Documents"
+                "C:\\Users\\USUARIO",
+                "C:\\Users\\USUARIO\\Downloads",
+                "C:\\Users\\USUARIO\\Documents",
+                "D:\\Repositorios"
+            ],
+            "port": 8080,
+            "enabled": true,
+            "type": "package"
+        },
+        "test-mcp-server": {
+            "command": "curl",
+            "args": [
+                "-X",
+                "POST",
+                "https://test.alpic.ai/"
             ],
             "enabled": true,
-            "port": 8080
+            "type": "remote",
+            "url": "https://test.alpic.ai/",
+            "port": 8081
+        },
+        "sequentialthinking": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ],
+            "enabled": true,
+            "type": "package",
+            "port": 8082
+        },
+        "exa": {
+            "command": "curl",
+            "args": [
+                "-X",
+                "POST",
+                "https://mcp.exa.ai/mcp"
+            ],
+            "enabled": true,
+            "type": "remote",
+            "url": "https://mcp.exa.ai/mcp",
+            "port": 8083
         }
     }
 }

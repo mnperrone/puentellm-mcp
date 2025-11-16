@@ -1,0 +1,74 @@
+[
+  {
+    "id": "filesystem",
+    "name": "Filesystem Server",
+    "description": "Servidor MCP para operaciones del sistema de archivos. Permite leer, escribir y gestionar archivos y directorios del sistema.",
+    "icon": "http://localhost:8000/static/icons/folder.png",
+    "manifest_url": "http://localhost:8000/static/manifests/filesystem.json",
+    "version": "1.0.0",
+    "min_client_version": "1.0.0",
+    "checksum": "sha256:filesystem_checksum",
+    "signature_url": "",
+    "tags": ["filesystem", "files", "system"]
+  },
+  {
+    "id": "weather-server-local",
+    "name": "Weather Server (Local)",
+    "description": "Servidor MCP local para consultar alertas meteorológicas usando la API del Servicio Nacional de Meteorología de EE.UU.",
+    "icon": "http://localhost:8000/static/icons/weather-local.png",
+    "manifest_url": "file://weather-server-python/weather.py",
+    "version": "1.0.0",
+    "min_client_version": "1.0.0",
+    "checksum": "sha256:local_server_no_checksum_needed",
+    "signature_url": "",
+    "tags": ["weather", "local", "nws", "alerts"]
+  },
+  {
+    "id": "weather-server-python",
+    "name": "Weather Server Python",
+    "description": "Servidor MCP en Python para consultar información meteorológica desde diferentes APIs como OpenWeatherMap. Incluye soporte para pronósticos y datos históricos.",
+    "icon": "http://localhost:8000/static/icons/weather.png",
+    "manifest_url": "http://localhost:8000/static/manifests/weather-server-python.json",
+    "version": "1.0.0",
+    "min_client_version": "1.0.0",
+    "checksum": "sha256:a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890",
+    "signature_url": "http://localhost:8000/static/signatures/weather-server-python.sig",
+    "tags": ["weather", "api", "python", "openweathermap"]
+  },
+  {
+    "id": "github-issues",
+    "name": "GitHub Issues Manager",
+    "description": "Gestiona issues, pull requests y repositorios de GitHub a través de la API oficial. Permite crear, editar, cerrar y consultar issues con soporte completo para labels y milestone.",
+    "icon": "http://localhost:8000/static/icons/github.png", 
+    "manifest_url": "http://localhost:8000/static/manifests/github-issues.json",
+    "version": "1.2.0",
+    "min_client_version": "1.0.0",
+    "checksum": "sha256:b2c3d4e5f6789012345678901234567890123456789012345678901234567890a1",
+    "signature_url": "http://localhost:8000/static/signatures/github-issues.sig",
+    "tags": ["github", "devops", "productivity", "api"]
+  },
+  {
+    "id": "file-manager",
+    "name": "Advanced File Manager",
+    "description": "Sistema avanzado de gestión de archivos con capacidades de búsqueda, manipulación y organización de directorios y archivos del sistema. Incluye operaciones CRUD completas.",
+    "icon": "http://localhost:8000/static/icons/folder.png",
+    "manifest_url": "http://localhost:8000/static/manifests/file-manager.json", 
+    "version": "2.1.0",
+    "min_client_version": "1.1.0",
+    "checksum": "sha256:c3d4e5f6789012345678901234567890123456789012345678901234567890a1b2",
+    "signature_url": "http://localhost:8000/static/signatures/file-manager.sig",
+    "tags": ["filesystem", "utilities", "management", "crud"]
+  },
+  {
+    "id": "database-query",
+    "name": "Database Query Tool", 
+    "description": "Herramienta para ejecutar consultas SQL en diferentes bases de datos (PostgreSQL, MySQL, SQLite) con validación, formateo y análisis de performance.",
+    "icon": "http://localhost:8000/static/icons/database.png",
+    "manifest_url": "http://localhost:8000/static/manifests/database-query.json",
+    "version": "1.5.3",
+    "min_client_version": "1.0.0",
+    "checksum": "sha256:d4e5f6789012345678901234567890123456789012345678901234567890a1b2c3",
+    "signature_url": "http://localhost:8000/static/signatures/database-query.sig",
+    "tags": ["database", "sql", "query", "postgresql", "mysql", "sqlite"]
+  }
+]

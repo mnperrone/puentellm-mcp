@@ -33,12 +33,12 @@ class OpenRouterHandler:
         # Configure session with SSL settings
         self.session = requests.Session()
         
-        # Configure retries with backoff
+        # Configure retries with backoff - reducir agresividad para evitar 429
         retry_strategy = requests.packages.urllib3.util.retry.Retry(
-            total=3,
-            backoff_factor=0.5,
+            total=2,  # Reducir de 3 a 2 intentos
+            backoff_factor=1.5,  # Aumentar tiempo de espera
             allowed_methods=["GET", "POST"],
-            status_forcelist=[429, 500, 502, 503, 504]
+            status_forcelist=[500, 502, 503, 504]  # Remover 429 para manejarlo manualmente
         )
         adapter = requests.adapters.HTTPAdapter(
             max_retries=retry_strategy,
@@ -285,15 +285,28 @@ class OpenRouterHandler:
                 headers=self.headers,
                 json=data,
                 timeout=30
-            ).json()
+            )
             
-            if 'choices' in response and len(response['choices']) > 0:
-                content = response['choices'][0]['message']['content']
+            # Verificar status code antes de parsear JSON
+            if response.status_code != 200:
+                print(f"HTTP Error: {response.status_code}")
+                print(f"Response: {response.text}")
+                if response.status_code == 429:
+                    raise LLMConnectionError("Modelo temporalmente no disponible: Rate limit alcanzado")
+                else:
+                    raise LLMConnectionError(f"Error HTTP {response.status_code}: {response.text}")
+            
+            # Parsear respuesta JSON
+            response_data = response.json()
+            
+            if 'choices' in response_data and len(response_data['choices']) > 0:
+                content = response_data['choices'][0]['message']['content']
                 # Sanitize output for common tokenization artifacts
                 content = self._sanitize_text(content)
                 print(f"Successfully generated response of length: {len(content)}")
                 return content
             else:
+                print(f"Unexpected response format: {response_data}")
                 raise LLMConnectionError("Response from OpenRouter did not contain expected content")
                 
         except Exception as e:
@@ -344,7 +357,7 @@ class OpenRouterHandler:
             # Implement an explicit retry loop for 429 (rate limit) that respects
             # the Retry-After header when present and uses exponential backoff with jitter.
             import time, random
-            max_attempts = 4
+            max_attempts = 3  # Reducir de 4 a 3 intentos
             attempt = 0
             response = None
             while attempt < max_attempts:
@@ -371,8 +384,8 @@ class OpenRouterHandler:
                         wait = None
 
                     if wait is None:
-                        # Exponential backoff with jitter: base 1s,2s,4s
-                        wait = (2 ** attempt) + random.uniform(0, 1)
+                        # Exponential backoff con más tiempo base para evitar saturar la API
+                        wait = min((3 ** attempt) + random.uniform(0, 2), 30)  # Máximo 30 segundos
 
                     print(f"OpenRouter returned 429 — attempt {attempt}/{max_attempts}, waiting {wait:.1f}s before retrying")
                     time.sleep(wait)
@@ -457,8 +470,25 @@ class OpenRouterHandler:
                                 f"Detalles: {detailed_msg}. Verifica tu API key de OpenRouter."
                             )
                     elif status_code == 429:
+                        # Extraer mensaje específico del error si está disponible
+                        detailed_msg = ""
+                        try:
+                            error_details = resp.json()
+                            if isinstance(error_details, dict) and 'error' in error_details:
+                                detailed_msg = error_details['error'].get('message', '')
+                                if 'rate-limited upstream' in detailed_msg:
+                                    raise LLMConnectionError(
+                                        f"Modelo temporalmente no disponible: El modelo {self.model} está "
+                                        f"experimentando limitaciones temporales en el proveedor. "
+                                        f"Prueba con otro modelo o intenta más tarde. "
+                                        f"Sugerencia: Usa 'deepseek/deepseek-chat-v3.1:free' como alternativa."
+                                    )
+                        except:
+                            pass
+                        
                         raise LLMConnectionError(
-                            "OpenRouter rate limit (HTTP 429). Espera unos segundos o revisa tu cuota/API key."
+                            f"OpenRouter rate limit (HTTP 429): {detailed_msg}. "
+                            f"Espera unos segundos o revisa tu cuota/API key."
                         )
                     # Try to extract JSON error if present
                     try:

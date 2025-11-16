@@ -1,0 +1,116 @@
+{
+  "name": "github-issues",
+  "version": "1.2.0",
+  "description": "Gestor de issues y PRs de GitHub",
+  "author": "GitHub MCP Team",
+  "license": "MIT",
+  "capabilities": {
+    "tools": [
+      {
+        "name": "create_issue",
+        "description": "Crea un nuevo issue en GitHub",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "repo": {
+              "type": "string",
+              "description": "Repositorio en formato owner/repo"
+            },
+            "title": {
+              "type": "string", 
+              "description": "Título del issue"
+            },
+            "body": {
+              "type": "string",
+              "description": "Cuerpo del issue"
+            },
+            "labels": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Labels a asignar"
+            }
+          },
+          "required": ["repo", "title"]
+        }
+      },
+      {
+        "name": "list_issues",
+        "description": "Lista los issues de un repositorio",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "repo": {
+              "type": "string",
+              "description": "Repositorio en formato owner/repo"
+            },
+            "state": {
+              "type": "string",
+              "enum": ["open", "closed", "all"],
+              "default": "open"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 30
+            }
+          },
+          "required": ["repo"]
+        }
+      },
+      {
+        "name": "update_issue",
+        "description": "Actualiza un issue existente",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "repo": {
+              "type": "string",
+              "description": "Repositorio en formato owner/repo"
+            },
+            "issue_number": {
+              "type": "integer",
+              "description": "Número del issue"
+            },
+            "title": {
+              "type": "string",
+              "description": "Nuevo título"
+            },
+            "body": {
+              "type": "string",
+              "description": "Nuevo cuerpo"
+            },
+            "state": {
+              "type": "string",
+              "enum": ["open", "closed"]
+            }
+          },
+          "required": ["repo", "issue_number"]
+        }
+      }
+    ],
+    "resources": [
+      {
+        "uri": "github://issues/{repo}",
+        "description": "Lista de issues del repositorio",
+        "mimeType": "application/json"
+      },
+      {
+        "uri": "github://issue/{repo}/{number}",
+        "description": "Issue específico",
+        "mimeType": "application/json"
+      }
+    ]
+  },
+  "launch": {
+    "command": "python",
+    "args": ["github_server.py"],
+    "env": {
+      "GITHUB_TOKEN": "required"
+    }
+  },
+  "requirements": {
+    "python": ">=3.8",
+    "packages": ["requests", "PyGithub"]
+  }
+}

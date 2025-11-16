@@ -1,0 +1,32 @@
+{
+  "name": "local-weather-existing",
+  "version": "1.0.0",
+  "description": "Servidor weather local existente",
+  "author": "Local Team",
+  "license": "MIT",
+  "capabilities": {
+    "tools": [
+      {
+        "name": "get_weather",
+        "description": "Obtiene información del clima",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "Nombre de la ciudad"
+            }
+          },
+          "required": ["city"]
+        }
+      }
+    ]
+  },
+  "launch": {
+    "command": "python",
+    "args": ["weather.py"]
+  },
+  "requirements": {
+    "python": ">=3.8"
+  }
+}

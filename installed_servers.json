@@ -1,0 +1,52 @@
+{
+  "test-mcp-server": {
+    "id": "test-mcp-server",
+    "name": "Test Mcp Server",
+    "description": "Alpic Test MCP Server - great server!",
+    "version": "0.0.1",
+    "installed_at": "2025-11-12T14:05:18.107959",
+    "install_details": {
+      "install_method": "remote",
+      "url": "https://test.alpic.ai/",
+      "transport_type": "streamable-http",
+      "headers": []
+    },
+    "tags": [
+      "remote"
+    ]
+  },
+  "sequentialthinking": {
+    "id": "sequentialthinking",
+    "name": "sequentialthinking",
+    "description": "Resolución de problemas dinámica y reflexiva a través de secuencias de pensamiento.",
+    "version": "2025.7.1",
+    "installed_at": "2025-11-12T19:27:10.062094",
+    "install_details": {
+      "install_method": "package",
+      "registry_type": "npm",
+      "identifier": "@modelcontextprotocol/server-sequential-thinking",
+      "package_version": "2025.7.1",
+      "transport": {},
+      "environment_variables": []
+    },
+    "tags": []
+  },
+  "exa": {
+    "id": "exa",
+    "name": "Exa",
+    "description": "Fast, intelligent web search and web crawling.\n\nNew mcp tool: Exa-code is a context tool for coding ",
+    "version": "3.0.9",
+    "installed_at": "2025-11-14T21:20:32.784093",
+    "install_details": {
+      "install_method": "remote",
+      "url": "https://mcp.exa.ai/mcp",
+      "transport_type": "streamable-http",
+      "headers": []
+    },
+    "tags": [
+      "search",
+      "memory",
+      "remote"
+    ]
+  }
+}

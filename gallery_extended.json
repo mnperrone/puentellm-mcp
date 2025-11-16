@@ -1,0 +1,319 @@
+{
+  "servers": [
+    {
+      "name": "filesystem",
+      "title": "Sistema de Archivos",
+      "description": "Operaciones seguras con archivos con controles de acceso configurables.",
+      "author": "Model Context Protocol",
+      "version": "0.8.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
+      "license": "MIT",
+      "categories": ["filesystem", "utility"],
+      "packages": {
+        "npm": {
+          "package": "@modelcontextprotocol/server-filesystem",
+          "version": "0.8.0"
+        }
+      }
+    },
+    {
+      "name": "fetch",
+      "title": "Obtención Web",
+      "description": "Obtención y conversión de contenido web para uso eficiente de LLM.",
+      "author": "Model Context Protocol",
+      "version": "0.8.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/fetch",
+      "license": "MIT",
+      "categories": ["web", "utility"],
+      "packages": {
+        "npm": {
+          "package": "@modelcontextprotocol/server-fetch",
+          "version": "0.8.0"
+        }
+      }
+    },
+    {
+      "name": "git",
+      "title": "Control de Versiones Git",
+      "description": "Herramientas para leer, buscar y manipular repositorios Git.",
+      "author": "Model Context Protocol",
+      "version": "0.8.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/git",
+      "license": "MIT",
+      "categories": ["development", "utility"],
+      "packages": {
+        "npm": {
+          "package": "@modelcontextprotocol/server-git",
+          "version": "0.8.0"
+        }
+      }
+    },
+    {
+      "name": "memory",
+      "title": "Sistema de Memoria",
+      "description": "Sistema de memoria persistente basado en grafos de conocimiento.",
+      "author": "Model Context Protocol",
+      "version": "0.8.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/memory",
+      "license": "MIT",
+      "categories": ["ai", "utility"],
+      "packages": {
+        "npm": {
+          "package": "@modelcontextprotocol/server-memory",
+          "version": "0.8.0"
+        }
+      }
+    },
+    {
+      "name": "sequentialthinking",
+      "title": "Pensamiento Secuencial",
+      "description": "Resolución de problemas dinámica y reflexiva a través de secuencias de pensamiento.",
+      "author": "Model Context Protocol",
+      "version": "2025.7.1",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking",
+      "license": "MIT",
+      "categories": ["ai", "productivity"],
+      "packages": {
+        "npm": {
+          "package": "@modelcontextprotocol/server-sequential-thinking",
+          "version": "2025.7.1"
+        }
+      }
+    },
+    {
+      "name": "time",
+      "title": "Tiempo y Zona Horaria",
+      "description": "Capacidades de conversión de tiempo y zona horaria.",
+      "author": "Model Context Protocol",
+      "version": "0.8.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/time",
+      "license": "MIT",
+      "categories": ["utility"],
+      "packages": {
+        "npm": {
+          "package": "@modelcontextprotocol/server-time",
+          "version": "0.8.0"
+        }
+      }
+    },
+    {
+      "name": "everything",
+      "title": "Servidor de Referencia",
+      "description": "Servidor de referencia/prueba con prompts, recursos y herramientas.",
+      "author": "Model Context Protocol",
+      "version": "0.8.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/everything",
+      "license": "MIT",
+      "categories": ["development", "utility"],
+      "packages": {
+        "npm": {
+          "package": "@modelcontextprotocol/server-everything",
+          "version": "0.8.0"
+        }
+      }
+    },
+    {
+      "name": "brave-search",
+      "title": "Búsqueda Brave",
+      "description": "Búsqueda web y local usando la API de Brave Search.",
+      "author": "Brave Software",
+      "version": "1.0.0",
+      "homepage": "https://github.com/brave/brave-search-mcp-server",
+      "license": "Apache-2.0",
+      "categories": ["search", "web"],
+      "packages": {
+        "npm": {
+          "package": "brave-search-mcp-server",
+          "version": "1.0.0"
+        }
+      },
+      "environment": {
+        "BRAVE_API_KEY": "Clave de API de Brave Search"
+      }
+    },
+    {
+      "name": "21st-dev-magic",
+      "title": "21st.dev Magic",
+      "description": "Crear componentes UI inspirados en los mejores ingenieros de diseño de 21st.dev.",
+      "author": "21st.dev",
+      "version": "1.0.0",
+      "homepage": "https://github.com/21st-dev/magic-mcp",
+      "license": "MIT",
+      "categories": ["development", "productivity"],
+      "packages": {
+        "npm": {
+          "package": "21st-dev-magic-mcp",
+          "version": "1.0.0"
+        }
+      }
+    },
+    {
+      "name": "2slides",
+      "title": "2slides",
+      "description": "Servidor MCP que proporciona herramientas para crear presentaciones.",
+      "author": "2slides",
+      "version": "1.0.0",
+      "homepage": "https://github.com/2slides/2slides-mcp",
+      "license": "MIT",
+      "categories": ["productivity", "content"],
+      "packages": {
+        "npm": {
+          "package": "2slides-mcp",
+          "version": "1.0.0"
+        }
+      }
+    },
+    {
+      "name": "aws-kb-retrieval",
+      "title": "AWS Knowledge Base",
+      "description": "Recuperación desde AWS Knowledge Base usando Bedrock Agent Runtime.",
+      "author": "Model Context Protocol (Archived)",
+      "version": "0.7.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/aws-kb-retrieval-server",
+      "license": "MIT",
+      "categories": ["ai", "database"],
+      "packages": {
+        "pip": {
+          "package": "aws-kb-retrieval-mcp",
+          "version": "0.7.0"
+        }
+      },
+      "environment": {
+        "AWS_ACCESS_KEY_ID": "ID de clave de acceso de AWS",
+        "AWS_SECRET_ACCESS_KEY": "Clave de acceso secreta de AWS",
+        "AWS_REGION": "Región de AWS"
+      }
+    },
+    {
+      "name": "github-mcp",
+      "title": "GitHub",
+      "description": "Gestión de repositorios, operaciones con archivos e integración con GitHub API.",
+      "author": "Model Context Protocol (Archived)",
+      "version": "0.7.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/github",
+      "license": "MIT",
+      "categories": ["development", "api"],
+      "packages": {
+        "pip": {
+          "package": "github-mcp",
+          "version": "0.7.0"
+        }
+      },
+      "environment": {
+        "GITHUB_TOKEN": "Token de acceso personal de GitHub"
+      }
+    },
+    {
+      "name": "google-drive-mcp",
+      "title": "Google Drive",
+      "description": "Acceso a archivos y capacidades de búsqueda para Google Drive.",
+      "author": "Model Context Protocol (Archived)",
+      "version": "0.7.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/gdrive",
+      "license": "MIT",
+      "categories": ["filesystem", "api"],
+      "packages": {
+        "pip": {
+          "package": "google-drive-mcp",
+          "version": "0.7.0"
+        }
+      },
+      "environment": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "Ruta al archivo de credenciales de Google"
+      }
+    },
+    {
+      "name": "sqlite-mcp",
+      "title": "SQLite",
+      "description": "Interacción con bases de datos y capacidades de inteligencia empresarial.",
+      "author": "Model Context Protocol (Archived)",
+      "version": "0.7.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/sqlite",
+      "license": "MIT",
+      "categories": ["database", "data-analysis"],
+      "packages": {
+        "pip": {
+          "package": "sqlite-mcp",
+          "version": "0.7.0"
+        }
+      }
+    },
+    {
+      "name": "postgresql-mcp",
+      "title": "PostgreSQL",
+      "description": "Acceso de solo lectura a base de datos con inspección de esquema.",
+      "author": "Model Context Protocol (Archived)",
+      "version": "0.7.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/postgres",
+      "license": "MIT",
+      "categories": ["database", "data-analysis"],
+      "packages": {
+        "pip": {
+          "package": "postgresql-mcp",
+          "version": "0.7.0"
+        }
+      },
+      "environment": {
+        "POSTGRES_HOST": "Host de PostgreSQL",
+        "POSTGRES_PORT": "Puerto de PostgreSQL",
+        "POSTGRES_USER": "Usuario de PostgreSQL",
+        "POSTGRES_PASSWORD": "Contraseña de PostgreSQL",
+        "POSTGRES_DB": "Base de datos de PostgreSQL"
+      }
+    },
+    {
+      "name": "redis-mcp",
+      "title": "Redis",
+      "description": "Interactuar con almacenes clave-valor de Redis.",
+      "author": "Model Context Protocol (Archived)",
+      "version": "0.7.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/redis",
+      "license": "MIT",
+      "categories": ["database", "api"],
+      "packages": {
+        "pip": {
+          "package": "redis-mcp",
+          "version": "0.7.0"
+        }
+      },
+      "environment": {
+        "REDIS_URL": "URL de conexión de Redis"
+      }
+    },
+    {
+      "name": "puppeteer-mcp",
+      "title": "Puppeteer",
+      "description": "Automatización de navegador y web scraping.",
+      "author": "Model Context Protocol (Archived)",
+      "version": "0.7.0",
+      "homepage": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/puppeteer",
+      "license": "MIT",
+      "categories": ["web", "automation"],
+      "packages": {
+        "npm": {
+          "package": "puppeteer-mcp",
+          "version": "0.7.0"
+        }
+      }
+    },
+    {
+      "name": "slack-mcp",
+      "title": "Slack",
+      "description": "Gestión de canales y capacidades de mensajería para Slack.",
+      "author": "Zencoder",
+      "version": "1.0.0",
+      "homepage": "https://github.com/zencoderai/slack-mcp-server",
+      "license": "MIT",
+      "categories": ["communication", "api"],
+      "packages": {
+        "npm": {
+          "package": "slack-mcp-server",
+          "version": "1.0.0"
+        }
+      },
+      "environment": {
+        "SLACK_TOKEN": "Token de bot de Slack"
+      }
+    }
+  ]
+}

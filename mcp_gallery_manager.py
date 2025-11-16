@@ -724,42 +724,6 @@ class MCPGalleryManager:
                 overall_success = True  # Permitir instalación
         
         return overall_success, verification_results, " | ".join(messages)
-        """
-        Verifica el checksum de un archivo descargado.
-        
-        Args:
-            content: Contenido del archivo en bytes
-            expected_checksum: Checksum esperado en formato "algoritmo:hash"
-            
-        Returns:
-            True si el checksum coincide, False en caso contrario
-        """
-        try:
-            if ":" not in expected_checksum:
-                self.logger.error(f"Formato de checksum inválido: {expected_checksum}")
-                return False
-                
-            algorithm, expected_hash = expected_checksum.split(":", 1)
-            
-            if algorithm not in hashlib.algorithms_available:
-                self.logger.error(f"Algoritmo de hash no soportado: {algorithm}")
-                return False
-                
-            hasher = hashlib.new(algorithm)
-            hasher.update(content)
-            actual_hash = hasher.hexdigest()
-            
-            matches = actual_hash == expected_hash
-            if matches:
-                self.logger.info(f"Checksum verificado correctamente: {algorithm}")
-            else:
-                self.logger.error(f"Checksum no coincide. Esperado: {expected_hash}, Obtenido: {actual_hash}")
-                
-            return matches
-            
-        except Exception as e:
-            self.logger.error(f"Error verificando checksum: {e}")
-            return False
     
     def download_file(self, url: str, timeout: int = 30) -> Tuple[bool, Optional[bytes], str]:
         """

@@ -6,7 +6,6 @@ Maneja la instalación, ejecución y gestión de servidores MCP como contenedore
 import json
 import docker
 import os
-import subprocess
 import time
 import logging
 from pathlib import Path
@@ -55,7 +54,6 @@ class DockerMCPManager:
             if self.docker_helper.ensure_docker_running():
                 # Intentar diferentes métodos de conexión para Windows
                 self.docker_client = None
-                last_error = None
                 
                 # Método 1: Conexión predeterminada
                 try:
@@ -63,10 +61,8 @@ class DockerMCPManager:
                     # Probar la conexión haciendo una llamada simple
                     self.docker_client.ping()
                     self.logger.info("Cliente Docker inicializado correctamente (método predeterminado)")
-                except Exception as e:
-                    last_error = str(e)
-                    # Cambiar DEBUG a INFO para reducir verbosidad
-                    # self.logger.debug(f"Método predeterminado falló: {e}")
+                except Exception:
+                    pass  # Intentar siguiente método
                 
                 # Método 2: Conexión TCP si el predeterminado falla
                 if self.docker_client is None:
@@ -74,10 +70,8 @@ class DockerMCPManager:
                         self.docker_client = docker.DockerClient(base_url='tcp://localhost:2375')
                         self.docker_client.ping()
                         self.logger.info("Cliente Docker inicializado correctamente (TCP)")
-                    except Exception as e:
-                        last_error = str(e)
-                        # Cambiar DEBUG a INFO para reducir verbosidad
-                        # self.logger.debug(f"Método TCP falló: {e}")
+                    except Exception:
+                        pass  # Intentar siguiente método
                 
                 # Método 3: Conexión con named pipe explícita para Windows
                 if self.docker_client is None:
@@ -85,10 +79,8 @@ class DockerMCPManager:
                         self.docker_client = docker.DockerClient(base_url='npipe://./pipe/docker_engine')
                         self.docker_client.ping()
                         self.logger.info("Cliente Docker inicializado correctamente (named pipe)")
-                    except Exception as e:
-                        last_error = str(e)
-                        # Cambiar DEBUG a INFO para reducir verbosidad
-                        # self.logger.debug(f"Método named pipe falló: {e}")
+                    except Exception:
+                        pass  # Último intento falló
                 
                 if self.docker_client is None:
                     self.logger.warning("No se pudo establecer conexión con Docker client")
@@ -139,6 +131,7 @@ class DockerMCPManager:
                     self.docker_client.ping()
                     self.logger.info("Cliente Docker reconectado correctamente (método predeterminado)")
                 except Exception:
+                    # Método predeterminado falló, intentar siguiente método
                     pass
                 
                 # Método 2: Conexión TCP si el predeterminado falla
@@ -148,6 +141,7 @@ class DockerMCPManager:
                         self.docker_client.ping()
                         self.logger.info("Cliente Docker reconectado correctamente (TCP)")
                     except Exception:
+                        # Método TCP falló, intentar siguiente método
                         pass
                 
                 # Método 3: Conexión con named pipe explícita para Windows
@@ -250,7 +244,7 @@ class DockerMCPManager:
             self.logger.info(f"Descargando imagen Docker: {full_image}")
             
             # Hacer pull de la imagen
-            image = self.docker_client.images.pull(image_name, tag=tag)
+            self.docker_client.images.pull(image_name, tag=tag)
             
             self.logger.info(f"Imagen {full_image} descargada correctamente")
             return True, f"Servidor {server_name} instalado correctamente"

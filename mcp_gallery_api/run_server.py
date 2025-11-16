@@ -4,7 +4,6 @@ Script para ejecutar la API de galería MCP de prueba
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Añadir el directorio padre al path para poder importar módulos

@@ -433,9 +433,9 @@ class MCPManager:
                 server_config.get("type") == "package"):
                 return True  # Asumir disponible sin verificar npm
                 
-        except Exception:
-            pass
-        
+        except Exception as e:
+            self.logger.error(f"Error checking if server '{server_name}' is running: {e}")
+            
         return False
     
     def _check_npm_package_installed(self, server_config):

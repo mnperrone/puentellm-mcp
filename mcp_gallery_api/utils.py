@@ -161,7 +161,7 @@ class ServerValidator:
             response.raise_for_status()
             
             # Verificar que es JSON válido
-            manifest = response.json()
+            manifest = response.json()  # Necesario para validación posterior
             
             # Verificar campos básicos requeridos
             required = ["name", "version"]

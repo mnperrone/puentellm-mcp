@@ -1183,7 +1183,7 @@ class ChatApp:
                     else:
                         # La ventana fue cerrada, limpiar la referencia
                         self.mcp_gallery_window = None
-                except:
+                except Exception:
                     # Error accediendo a la ventana, limpiar la referencia
                     self.mcp_gallery_window = None
             
@@ -1329,13 +1329,8 @@ class ChatApp:
         try:
             # Cargar configuración del modelo
             model = self.config.get('llm_model')
-            # if model:
-            #     self.llm_combo.set(model)
             
             # Cargar configuración del proveedor
-            # provider = self.config.get('llm_provider')
-            # if provider:
-            #     self.provider_combo.set(provider)
             
             self.log_message("Configuración cargada correctamente", "info")
             

@@ -483,7 +483,8 @@ class OpenRouterHandler:
                                         f"Prueba con otro modelo o intenta más tarde. "
                                         f"Sugerencia: Usa 'deepseek/deepseek-chat-v3.1:free' como alternativa."
                                     )
-                        except:
+                        except Exception:
+                            # Ignore errors while extracting error details; will raise a generic rate limit error below
                             pass
                         
                         raise LLMConnectionError(

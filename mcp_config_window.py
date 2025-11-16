@@ -5,7 +5,6 @@ import os
 from ui_helpers import create_standard_dialog
 import tkinter as tk
 from mcp_gallery_manager import MCPGalleryManager
-import threading
 
 class MCPConfigWindow(ctk.CTkToplevel):
     """

@@ -18,8 +18,10 @@ except ImportError:
                 widget.insert(tk.END, f"[{tag}] {message}\n")
                 widget.configure(state="disabled")
                 widget.see(tk.END)
-            except:
-                pass
+            except Exception as e:
+                # Ignore UI errors in fallback display_message to avoid crashing the app if widget is unavailable
+                import sys
+                print(f"Error displaying message in fallback display_message: {e}", file=sys.stderr)
 
 class PersistentLogger:
     """
@@ -135,14 +137,16 @@ class PersistentLogger:
                 else:
                     self._safe_display_message(widget, message, tag)
             except Exception:
-                pass  # Ignorar errores de UI para evitar recursión
+                # Ignorar errores de UI para evitar recursión en display_message
+                pass
     
     def _safe_display_message(self, widget, message, tag):
         """Muestra mensaje de manera segura sin bloquear"""
         try:
             display_message(widget, message, tag, new_line_before_message=True)
         except Exception:
-            pass
+            # Log the exception to help with debugging UI display issues
+            self.logger.exception("Failed to display message in UI widget")
     
     def debug(self, message, *args, **kwargs):
         """Registra un mensaje de nivel DEBUG."""

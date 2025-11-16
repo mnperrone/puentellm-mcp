@@ -3,12 +3,10 @@ Servidor API para la Galería de Servidores MCP
 FastAPI server que actúa como catálogo centralizado de servidores MCP.
 """
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import json
-import os
 from pathlib import Path
 from typing import Dict, List, Optional
 import uvicorn

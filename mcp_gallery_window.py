@@ -4,13 +4,12 @@ Ventana Tkinter que permite navegar, instalar y gestionar servidores MCP.
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox, font
-import customtkinter as ctk
+from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 import requests
 import io
 import threading
-from typing import Dict, List, Optional
+from typing import Dict
 from mcp_gallery_manager import MCPGalleryManager
 
 
@@ -72,7 +71,7 @@ class MCPGalleryWindow:
             # Intentar cargar icono desde assets
             icon_path = "assets/icons/mcp_gallery.ico"
             self.window.iconbitmap(icon_path)
-        except:
+        except (tk.TclError, FileNotFoundError, OSError):
             pass  # Ignorar si no existe el icono
     
     def _create_widgets(self):

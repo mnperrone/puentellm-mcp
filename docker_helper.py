@@ -7,8 +7,6 @@ import subprocess
 import time
 import platform
 import os
-import sys
-from pathlib import Path
 from typing import Optional, Tuple, List
 import json
 

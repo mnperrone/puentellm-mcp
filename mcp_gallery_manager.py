@@ -13,7 +13,6 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from assets.logging import PersistentLogger
-import jsonschema
 from jsonschema import validate, ValidationError
 
 # Importar el gestor de Docker MCP
@@ -1454,7 +1453,8 @@ class MCPGalleryManager:
                         uid_match = re.search(r'Comment:\s*(.+)', content)
                         if uid_match:
                             key_info["comment"] = uid_match.group(1)
-                    except:
+                    except Exception:
+                        # No se pudo extraer el comentario de la clave; esto es opcional y no crítico
                         pass
                     
                     keys.append(key_info)
@@ -1528,8 +1528,8 @@ class MCPGalleryManager:
                     if server_dir.is_dir():
                         total_size += sum(f.stat().st_size for f in server_dir.rglob('*') if f.is_file())
                 stats["disk_usage_mb"] = round(total_size / (1024 * 1024), 2)
-            except:
-                pass
+            except Exception as e:
+                self.logger.warning(f"Error calculando uso de disco: {e}")
             
             return stats
             

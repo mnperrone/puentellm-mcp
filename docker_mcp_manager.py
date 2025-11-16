@@ -86,9 +86,6 @@ class DockerMCPManager:
                     self.logger.warning("No se pudo establecer conexión con Docker client")
                     self.logger.warning("Docker parece estar instalado pero el daemon no está accesible")
                     self.logger.info("Sugerencia: Verificar que Docker Desktop esté completamente iniciado")
-                    # Solo mostrar último error si es necesario para debugging
-                    # if last_error:
-                    #     self.logger.debug(f"Último error: {last_error}")
                     self.logger.info("Docker MCP Manager funcionará con capacidades limitadas")
             else:
                 self.docker_client = None
